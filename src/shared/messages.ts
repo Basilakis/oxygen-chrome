@@ -82,8 +82,11 @@ export type Message =
   | { type: 'settings/update'; patch: Partial<Settings> }
   | { type: 'sync/bootstrap' }
   | { type: 'sync/incremental' }
+  | { type: 'sync/auto' }
   | { type: 'sync/status' }
   | { type: 'search/catalog'; query: string; limit?: number }
+  | { type: 'search/catalog/local'; query: string; limit?: number }
+  | { type: 'search/catalog/remote'; query: string; limit?: number }
   | { type: 'catalog/get-product'; id: Id }
   | { type: 'lookups/get-taxes' }
   | { type: 'lookups/get-warehouses' }

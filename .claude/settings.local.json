@@ -46,7 +46,8 @@
       "Bash(curl -sS -D - -o /dev/null -X OPTIONS -H 'Origin: https://oxygen-helper.vercel.app' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: authorization,content-type,x-api-key,anthropic-version' https://api.anthropic.com/v1/messages)",
       "Bash(curl -sS -o /tmp/r.txt -w 'HTTP %{http_code} | content-type: %{content_type}\\\\n' -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Accept: application/json' 'https://api.oxygen.gr/v1/__TRACKED_VAR__?per_page=1')",
       "Bash(curl -sS -o /tmp/r.txt -w 'HTTP %{http_code}\\\\n' -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Content-Type: application/json' -H 'Accept: application/json' -X POST -d '{}' https://api.oxygen.gr/v1/expenses)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(grep -oE '\\(barcode|part_number|mpn_isbn|notes\\)[^a-zA-Z0-9_][^,;}]{1,30}' dist/assets/prefill-modal-CjxGMSAx.js)"
     ]
   }
 }

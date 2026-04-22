@@ -215,7 +215,7 @@ function normalizeProductWarehouse(raw: unknown): ProductWarehouseStock {
   }
 }
 
-function normalizeProduct(raw: unknown): Product {
+export function normalizeProduct(raw: unknown): Product {
   const r = raw as Record<string, unknown>
   const category = r.category as Record<string, unknown> | null | undefined
   const categoryId = category ? toId(category.id) : undefined

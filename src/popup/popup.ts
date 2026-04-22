@@ -2,6 +2,7 @@ import { renderSearchTab } from './tabs/search'
 import { renderDraftsTab } from './tabs/drafts'
 import { renderStatusTab } from './tabs/status'
 import { renderAgentTab } from './tabs/agent'
+import { triggerAutoSyncOnOpen } from '@/core/auto-sync'
 
 type TabName = 'search' | 'drafts' | 'agent' | 'status'
 const renderers: Record<TabName, (root: HTMLElement) => void | Promise<void>> = {
@@ -41,3 +42,8 @@ if (new URLSearchParams(window.location.search).get('window') === '1') {
 }
 
 selectTab('search')
+
+// Throttled incremental sync on every popup open — keeps the local catalog
+// fresh without blocking the UI. The handler itself skips if last sync was
+// < 2 minutes ago.
+triggerAutoSyncOnOpen()

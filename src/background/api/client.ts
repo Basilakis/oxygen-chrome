@@ -1,6 +1,22 @@
 import { getSettings } from '@/background/storage/settings'
+import { getRuntimeConfig } from '@/core/config'
 import { OxygenApiError, OxygenAuthError } from './errors'
 import { sleep } from '@/shared/util'
+
+function isExtensionContext(): boolean {
+  return typeof chrome !== 'undefined' && !!chrome.runtime?.id
+}
+
+/**
+ * Web shell calls go through /api/oxygen (same-origin Vercel proxy) so the
+ * operator can optionally inject a server-side OXYGEN_API_TOKEN. Extension
+ * shell talks directly to api.oxygen.gr with the user's BYOK Bearer token.
+ */
+function resolveBase(settingsBase: string): string {
+  if (isExtensionContext()) return settingsBase
+  const origin = typeof location !== 'undefined' ? location.origin : ''
+  return `${origin}/api/oxygen`
+}
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
@@ -38,13 +54,24 @@ export async function apiRequest<T = unknown>(
   opts: RequestOptions = {},
 ): Promise<T> {
   const settings = await getSettings()
-  if (!settings.token) throw new OxygenAuthError({ message: 'no token configured' })
+  const runtime = getRuntimeConfig()
+  const extensionMode = isExtensionContext()
 
-  const url = buildUrl(settings.base_url, path, opts.query)
+  // Token rules:
+  //   Extension: always need a user token (no server side to fall back on).
+  //   Web + serverAuth: user token optional (server injects its own).
+  //   Web + no serverAuth: user token required (proxy forwards it).
+  if (!settings.token && (extensionMode || !runtime.serverAuth)) {
+    throw new OxygenAuthError({ message: 'no token configured' })
+  }
+
+  const url = buildUrl(resolveBase(settings.base_url), path, opts.query)
   const method = opts.method ?? 'GET'
   const headers: Record<string, string> = {
     Accept: 'application/json',
-    Authorization: `Bearer ${settings.token}`,
+  }
+  if (settings.token) {
+    headers['Authorization'] = `Bearer ${settings.token}`
   }
   let body: string | undefined
   if (opts.body !== undefined) {

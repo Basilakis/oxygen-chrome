@@ -1,7 +1,7 @@
 import { sendMessage } from '@/shared/messages'
 import type { ScrapedInvoice } from '@/shared/messages'
 import type { Product, Settings } from '@/shared/types'
-import { formatMoney } from '@/shared/util'
+import { formatMoney, asArray, sumStock } from '@/shared/util'
 import * as PrefillModal from '@/content/overlays/prefill-modal'
 
 /**
@@ -534,7 +534,7 @@ async function runLocalCommand(line: string): Promise<string> {
         '  /search <query>     — αναζήτηση στον τοπικό κατάλογο',
         '  /product <code>     — λεπτομέρειες προϊόντος',
         '  /stock <code>       — αποθέματα ανά αποθήκη',
-        '  /drafts             — λίστα πρόχειρων',
+        '  /drafts             — λίστα ειδοποιήσεων',
         '  /stats              — συνολικά μεγέθη καταλόγου',
         '',
         'Για AI χρήση:',
@@ -567,7 +567,7 @@ async function runLocalCommand(line: string): Promise<string> {
         `Τιμή πώλησης: ${formatMoney(found.sale_net_amount ?? 0)}`,
         `ΦΠΑ πώλησης: ${found.sale_vat_ratio ?? '—'}%`,
         `Μονάδα: ${found.metric ?? '—'}`,
-        `Συνολικό απόθεμα: ${(found.warehouses ?? []).reduce((s, w) => s + (w.quantity ?? 0), 0)}`,
+        `Συνολικό απόθεμα: ${sumStock(found.warehouses)}`,
       ].join('\n')
     }
     case '/stock': {
@@ -577,7 +577,7 @@ async function runLocalCommand(line: string): Promise<string> {
       const p = (res as { results: { exact: { product: Product }[]; fuzzy: { product: Product }[] } }).results
       const found = p.exact[0]?.product ?? p.fuzzy[0]?.product
       if (!found) return 'Δε βρέθηκε.'
-      const ws = found.warehouses ?? []
+      const ws = asArray<{ id?: string; name?: string; quantity?: number }>(found.warehouses)
       if (!ws.length) return `${found.name}: δεν υπάρχει απόθεμα σε καμία αποθήκη.`
       const total = ws.reduce((s, w) => s + (w.quantity ?? 0), 0)
       return [
@@ -590,7 +590,7 @@ async function runLocalCommand(line: string): Promise<string> {
       const res = await sendMessage({ type: 'drafts/list' })
       if (!res.ok) return `Σφάλμα: ${(res as { error: string }).error}`
       const drafts = (res as { drafts: Array<{ id: string; status: string; lines: unknown[]; updated_at: number }> }).drafts
-      if (!drafts.length) return 'Δεν υπάρχουν πρόχειρα.'
+      if (!drafts.length) return 'Δεν υπάρχουν ειδοποιήσεις.'
       return drafts
         .map((d) => `• ${d.id.slice(0, 10)} [${d.status}] ${d.lines.length} γραμμές · ${new Date(d.updated_at).toLocaleDateString('el-GR')}`)
         .join('\n')

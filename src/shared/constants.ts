@@ -43,7 +43,11 @@ export const OXYGEN_HOST_MATCH = /(^|\.)oxygen\.gr$/i
 export const MODAL_HEADING_GREEK = 'Προβολή Παραστατικού'
 export const INJECT_BUTTON_LABEL = '➕ Δημιουργία νέων'
 
-export const SESSION_KEY_SEARCH_INDEX = 'search_index_serialized'
+// Bump the version suffix whenever anything about the index layout or
+// tokenization changes (fields, storeFields, processTerm, normalizeTerm).
+// The old key becomes unreadable, so `ensureReady` falls back to a fresh
+// rebuild from IDB — otherwise stale tokens keep leaking into searches.
+export const SESSION_KEY_SEARCH_INDEX = 'search_index_serialized_v2'
 export const STORAGE_KEY_SETTINGS = 'settings'
 export const STORAGE_KEY_SYNC_STATE = 'sync_state'
 export const STORAGE_KEY_AUTH_CHECK = 'auth_last_check'

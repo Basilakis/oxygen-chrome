@@ -18,7 +18,7 @@ body[data-window-mode="true"] {
 }
 
 /* Keep tabs sticky so the user doesn't lose the nav while scrolling a tall
-   Πρόχειρα / Ρυθμίσεις panel. */
+   Ειδοποιήσεις / Ρυθμίσεις panel. */
 .tabs {
   position: sticky;
   top: 0;

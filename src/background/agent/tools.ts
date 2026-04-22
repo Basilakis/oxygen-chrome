@@ -13,6 +13,7 @@ import {
   Warehouses,
 } from '@/background/storage/stores'
 import { search } from '@/background/search'
+import { asArray, sumStock } from '@/shared/util'
 
 export interface ToolDefinition {
   name: string
@@ -308,7 +309,9 @@ export async function executeTool(name: string, input: ToolInput): Promise<unkno
         let product = await Products.findByCode(ident)
         if (!product) product = await Products.get(ident)
         if (!product) return { found: false }
-        const warehouses = product.warehouses ?? []
+        const warehouses = asArray<{ id?: string; warehouse_id?: string; name?: string; quantity?: number }>(
+          product.warehouses,
+        )
         const total = warehouses.reduce((s, w) => s + (w.quantity ?? 0), 0)
         return {
           found: true,
@@ -340,7 +343,7 @@ export async function executeTool(name: string, input: ToolInput): Promise<unkno
 /* -------- helpers ------------------------------------------------------ */
 
 function compactProduct(p: import('@/shared/types').Product): unknown {
-  const total_stock = (p.warehouses ?? []).reduce((s, w) => s + (w.quantity ?? 0), 0)
+  const total_stock = sumStock(p.warehouses)
   return {
     id: p.id,
     code: p.code,
@@ -355,7 +358,7 @@ function compactProduct(p: import('@/shared/types').Product): unknown {
 }
 
 function fullProduct(p: import('@/shared/types').Product) {
-  const total_stock = (p.warehouses ?? []).reduce((s, w) => s + (w.quantity ?? 0), 0)
+  const total_stock = sumStock(p.warehouses)
   return {
     id: p.id,
     code: p.code,

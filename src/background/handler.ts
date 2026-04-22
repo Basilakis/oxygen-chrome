@@ -12,6 +12,7 @@
 
 import type { Message, MessageResponse, SyncStatus, AuthStatus } from '@/shared/messages'
 import { getSettings, updateSettings, setAuthCheck, getAuthCheck } from '@/background/storage/settings'
+import { getRuntimeConfig } from '@/core/config'
 import { apiRequest, resetAuthInvalid } from '@/background/api/client'
 import {
   createContact,
@@ -19,8 +20,8 @@ import {
   vatCheck,
 } from '@/background/api/endpoints'
 import { runBootstrap, getCounts } from '@/background/sync/bootstrap'
-import { runIncremental } from '@/background/sync/incremental'
-import { search } from '@/background/search'
+import { runIncremental, isIncrementalRunning } from '@/background/sync/incremental'
+import { search, searchLocal, searchRemoteOnly } from '@/background/search'
 import { suggest as suggestSku, previewNext as previewSku } from '@/background/sku/generator'
 import {
   BusinessAreas,
@@ -163,12 +164,60 @@ export async function handle(message: Message): Promise<MessageResponse> {
     case 'sync/incremental':
       await runIncremental()
       return { ok: true, status: await buildSyncStatus() } as MessageResponse
+    case 'sync/auto': {
+      // Throttled auto-sync for popup/web-shell page loads. Skips if:
+      //   - A sync is already running (don't stack them).
+      //   - The last successful incremental ran less than AUTO_SYNC_MIN_AGE
+      //     ms ago (prevents a spam of syncs when the user opens/closes the
+      //     popup repeatedly).
+      //   - No Oxygen token is configured (either extension BYOK missing, or
+      //     web multi-user mode without a pasted token and no server-side
+      //     OXYGEN_API_TOKEN).
+      const AUTO_SYNC_MIN_AGE_MS = 2 * 60 * 1000
+      const state = await buildSyncStatus()
+      if (isIncrementalRunning()) {
+        return { ok: true, skipped: true, reason: 'running', status: state } as unknown as MessageResponse
+      }
+      const age =
+        state.last_incremental_at !== undefined
+          ? Date.now() - state.last_incremental_at
+          : Infinity
+      if (age < AUTO_SYNC_MIN_AGE_MS) {
+        return { ok: true, skipped: true, reason: 'fresh', age_ms: age, status: state } as unknown as MessageResponse
+      }
+      const settings = await getSettings()
+      const runtime = getRuntimeConfig()
+      const haveAuth = Boolean(settings.token) || runtime.serverAuth
+      if (!haveAuth) {
+        return { ok: true, skipped: true, reason: 'no_token', status: state } as unknown as MessageResponse
+      }
+      try {
+        await runIncremental()
+        return { ok: true, skipped: false, ran: true, status: await buildSyncStatus() } as unknown as MessageResponse
+      } catch (err) {
+        return {
+          ok: true,
+          skipped: false,
+          ran: false,
+          error: String((err as Error)?.message ?? err),
+          status: await buildSyncStatus(),
+        } as unknown as MessageResponse
+      }
+    }
     case 'sync/status':
       return { ok: true, status: await buildSyncStatus() } as MessageResponse
 
     // --- Search -----
     case 'search/catalog': {
       const results = await search(message.query, message.limit ?? 20)
+      return { ok: true, results } as MessageResponse
+    }
+    case 'search/catalog/local': {
+      const results = await searchLocal(message.query, message.limit ?? 20)
+      return { ok: true, results } as MessageResponse
+    }
+    case 'search/catalog/remote': {
+      const results = await searchRemoteOnly(message.query, message.limit ?? 20)
       return { ok: true, results } as MessageResponse
     }
     case 'catalog/get-product': {

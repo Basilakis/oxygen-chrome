@@ -10,3 +10,6 @@ dist-web/
 *.log
 .vscode/
 .idea/
+
+# Claude Code local state (session transcripts may contain pasted secrets)
+.claude/

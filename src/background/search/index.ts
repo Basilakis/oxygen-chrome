@@ -104,7 +104,16 @@ export async function ensureReady(): Promise<MiniSearch<Product>> {
         },
         processTerm: (term) => normalizeTerm(term) || null,
       })
-      return ms
+      // Sanity check: if IDB has products but the loaded index has none, the
+      // serialized blob is stale (e.g. from a pre-sync state or a schema skew)
+      // and we should rebuild. Otherwise every search returns empty despite
+      // the catalog being populated.
+      if (ms.documentCount > 0) return ms
+      const dbCount = await Products.count()
+      if (dbCount === 0) return ms
+      console.warn(
+        `[oxygen-helper] search index had 0 docs but IDB has ${dbCount}; rebuilding`,
+      )
     } catch (err) {
       console.warn('[oxygen-helper] search index rehydrate failed; rebuilding', err)
     }
@@ -113,10 +122,16 @@ export async function ensureReady(): Promise<MiniSearch<Product>> {
   return ms!
 }
 
-export async function search(query: string, limit = 20): Promise<SearchResults> {
+/**
+ * Local-only search — MiniSearch index + direct IDB lookups for code-like
+ * queries. Fast (<5ms on a 10k catalog) and works offline. Used by:
+ *   - The popup search tab as the first half of parallel search.
+ *   - JARVIS agent tools that need to count/filter without API round-trips.
+ *   - Flow 1 duplicate detection.
+ */
+export async function searchLocal(query: string, limit = 20): Promise<SearchResults> {
   const q = query.trim()
-  const empty: SearchResults = { query: q, exact: [], fuzzy: [] }
-  if (!q) return empty
+  if (!q) return { query: q, exact: [], fuzzy: [] }
 
   const exactHits: CatalogSearchHit[] = []
 
@@ -143,10 +158,6 @@ export async function search(query: string, limit = 20): Promise<SearchResults> 
   const raw = index.search(q, { prefix: true, fuzzy: 0.4, combineWith: 'AND' })
   const exactIds = new Set(exactHits.map((h) => h.product.id))
 
-  // Trust MiniSearch's scoring for local results — the previous substring
-  // post-filter rejected valid prefix matches (e.g. "Fer" matches "FERARRA"
-  // via prefix, but at 4 chars "Ferr" isn't a substring of "ferarra" and the
-  // filter dropped it). MiniSearch already ranked the hit; show it.
   const fuzzyHits: CatalogSearchHit[] = []
   for (const r of raw) {
     const id = String(r.id)
@@ -161,22 +172,43 @@ export async function search(query: string, limit = 20): Promise<SearchResults> 
     if (fuzzyHits.length >= limit) break
   }
 
-  // Remote fallback: the API's /products?search= can return everything when
-  // nothing matches, so we DO filter those (the relevance check only gates
-  // server responses, not local hits).
-  if (exactHits.length === 0 && fuzzyHits.length === 0) {
-    try {
-      const terms = tokenizeQuery(q)
-      const remote = (await searchRemote(q, limit * 3)).filter((h) =>
-        termsMatchProduct(h.product, terms),
-      )
-      return { query: q, exact: [], fuzzy: remote.slice(0, limit) }
-    } catch (err) {
-      console.warn('[oxygen-helper] remote search fallback failed', err)
-    }
-  }
-
   return { query: q, exact: exactHits, fuzzy: fuzzyHits }
+}
+
+/**
+ * Remote-only search — hits /products?search= for authoritative, always-fresh
+ * results. Slower (200-400ms network round-trip) and can fail. Used by the
+ * popup search tab as the second half of parallel search. We filter the API
+ * response client-side because /products?search= sometimes returns the whole
+ * catalog when no match is found.
+ */
+export async function searchRemoteOnly(
+  query: string,
+  limit = 20,
+): Promise<SearchResults> {
+  const q = query.trim()
+  if (!q) return { query: q, exact: [], fuzzy: [] }
+  const terms = tokenizeQuery(q)
+  const hits = (await searchRemote(q, limit * 3)).filter((h) =>
+    termsMatchProduct(h.product, terms),
+  )
+  return { query: q, exact: [], fuzzy: hits.slice(0, limit) }
+}
+
+/**
+ * Backwards-compatible combined search — local first, remote only as fallback
+ * when local returns nothing. Used by the agent slash commands and other
+ * in-process callers that expect a single synchronous-looking result.
+ */
+export async function search(query: string, limit = 20): Promise<SearchResults> {
+  const local = await searchLocal(query, limit)
+  if (local.exact.length > 0 || local.fuzzy.length > 0) return local
+  try {
+    return await searchRemoteOnly(query, limit)
+  } catch (err) {
+    console.warn('[oxygen-helper] remote search fallback failed', err)
+    return local
+  }
 }
 
 function tokenizeQuery(q: string): string[] {
@@ -235,48 +267,59 @@ function editDistanceWithin(a: string, b: string, max: number): boolean {
 }
 
 async function searchRemote(query: string, limit: number): Promise<CatalogSearchHit[]> {
-  const { apiRequest } = await import('@/background/api/client')
+  const [{ apiRequest }, { normalizeProduct }] = await Promise.all([
+    import('@/background/api/client'),
+    import('@/background/api/endpoints'),
+  ])
   type Wrapped = { data?: unknown[] } | unknown[]
   const res = await apiRequest<Wrapped>('/products', {
     query: { search: query, per_page: limit },
   })
   const list = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : []
   if (!list.length) return []
-  // Lightweight inline normalization. Full normalization happens on next sync —
-  // this just yields a usable display for the immediate query.
+
+  // Run the full normalizer used by bootstrap sync so we get every field the
+  // API returns. Anything the search endpoint omits (category, mydata_*,
+  // supplier_id, etc.) comes back undefined from normalizeProduct — we then
+  // merge with the existing IDB record to retain those fields instead of
+  // overwriting them with undefined.
   const hits: CatalogSearchHit[] = []
   for (const raw of list) {
     if (!raw || typeof raw !== 'object') continue
-    const r = raw as Record<string, unknown>
-    const product: Product = {
-      id: String(r.id ?? ''),
-      code: String(r.code ?? ''),
-      name: String(r.name ?? ''),
-      barcode: (r.barcode as string | null | undefined) ?? null,
-      mpn_isbn: (r.mpn_isbn as string | null | undefined) ?? null,
-      part_number: (r.part_number as string | null | undefined) ?? null,
-      sale_net_amount: toNumberOpt(r.sale_net_amount),
-      purchase_net_amount: toNumberOpt(r.purchase_net_amount),
-      sale_vat_ratio: toNumberOpt(r.sale_vat_ratio),
-      quantity: toNumberOpt(r.quantity),
-      warehouses: Array.isArray(r.warehouses)
-        ? (r.warehouses as Array<Record<string, unknown>>).map((w) => ({
-            id: String(w.id ?? ''),
-            warehouse_id: String(w.id ?? ''),
-            quantity: toNumberOpt(w.quantity) ?? 0,
-          }))
-        : [],
-    }
-    hits.push({ product, tier: 'fuzzy', score: 0.5, matched_field: 'remote' })
-    // Backfill local cache + index so next search is instant.
-    Products.put(product).catch(() => void 0)
-    addOrUpdate(product).catch(() => void 0)
+    const fresh = normalizeProduct(raw)
+    if (!fresh.id) continue
+    const existing = await Products.get(fresh.id)
+    const merged = mergeProducts(existing, fresh)
+    hits.push({ product: merged, tier: 'fuzzy', score: 0.5, matched_field: 'remote' })
+    // Backfill local cache + index so next search is instant AND keeps the
+    // broader data (category_name, supplier_code, etc.) intact.
+    Products.put(merged).catch(() => void 0)
+    addOrUpdate(merged).catch(() => void 0)
   }
   return hits
 }
 
-function toNumberOpt(v: unknown): number | undefined {
-  if (v === null || v === undefined || v === '') return undefined
-  const n = typeof v === 'number' ? v : parseFloat(String(v))
-  return Number.isFinite(n) ? n : undefined
+/**
+ * Merge an existing IDB product with a fresh remote record. Strategy:
+ *   - Start with existing so we retain any fields the search endpoint didn't
+ *     return (e.g. mydata_income_*, supplier_id, category relations).
+ *   - Overwrite with fresh fields that are defined AND non-empty — a field
+ *     set to undefined on fresh means "the search endpoint didn't send it",
+ *     not "this should be cleared".
+ *   - Special-case `warehouses`: the search endpoint typically does return
+ *     stock, so prefer fresh when it has entries, fall back to existing when
+ *     it came back empty.
+ */
+function mergeProducts(existing: Product | undefined, fresh: Product): Product {
+  if (!existing) return fresh
+  const out: Product = { ...existing }
+  for (const [k, v] of Object.entries(fresh) as Array<[keyof Product, unknown]>) {
+    if (v === undefined) continue
+    if (v === '' && existing[k] !== undefined && existing[k] !== '') continue
+    ;(out as unknown as Record<string, unknown>)[k as string] = v
+  }
+  const freshWarehouses = Array.isArray(fresh.warehouses) ? fresh.warehouses : []
+  const existingWarehouses = Array.isArray(existing.warehouses) ? existing.warehouses : []
+  out.warehouses = freshWarehouses.length ? freshWarehouses : existingWarehouses
+  return out
 }

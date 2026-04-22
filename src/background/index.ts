@@ -74,7 +74,7 @@ async function ensureContextMenus() {
   })
   chrome.contextMenus.create({
     id: CTX_MENU_PIN,
-    title: 'Καρφίτσωμα στο τρέχον πρόχειρο',
+    title: 'Καρφίτσωμα στην τρέχουσα ειδοποίηση',
     contexts: ['selection'],
   })
   chrome.contextMenus.create({

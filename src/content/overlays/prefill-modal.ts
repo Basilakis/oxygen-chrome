@@ -696,32 +696,44 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
     // For lines with variations enabled, we expand one state → N products
     // (one per selected value), each with a child code `{sku}.{n}` and a name
     // suffixed with the variation value label.
-    const baseFromState = (s: LineState): Record<string, unknown> => ({
-      type: s.type,
-      status: s.active,
-      category_id: s.categoryId,
-      measurement_unit_id: s.unitId,
-      barcode: s.barcode || null,
-      part_number: s.partNumber || null,        // PC ή PN — manufacturer
-      mpn_isbn: s.partNumber || null,           // mirror on MPN/ISBN
-      supplier_code: s.supplierProductCode || null,  // Κωδικός Προϊόντος Προμ. — from invoice ΚΩΔ
-      cpv_code: s.cpvCode || null,
-      taric_code: s.taricCode || null,
-      stock_threshold: s.noStockThreshold ? null : s.stockThreshold,
-      no_stock_threshold: s.noStockThreshold,
-      prices_include_vat: s.pricesIncludeVat,
-      purchase_net_amount: s.purchasePrice,
-      purchase_tax_id: s.purchaseTaxId!,
-      sale_net_amount: s.salePrice,
-      sale_tax_id: s.saleTaxId!,
-      sale_discount_percent: s.saleDiscountPercent || 0,
-      mydata_income_category: s.mydataIncomeCategory,
-      mydata_income_type: s.mydataIncomeType,
-      mydata_income_retail_category: s.mydataIncomeRetailCategory,
-      mydata_income_retail_type: s.mydataIncomeRetailType,
-      notes: s.notes || null,
-      warehouses: s.warehouseId ? [{ id: s.warehouseId, quantity: s.quantity }] : [],
-    })
+    //
+    // Optional string fields (barcode/part_number/mpn_isbn/supplier_code/
+    // cpv_code/taric_code/notes) must be OMITTED when empty, not sent as "".
+    // The Oxygen API runs Laravel's default ConvertEmptyStringsToNull
+    // middleware, which rewrites "" → null before validation; the `string`
+    // rule (without `nullable`) then rejects null with "must be a string."
+    // Leaving the key out bypasses the rule entirely.
+    const baseFromState = (s: LineState): Record<string, unknown> => {
+      const base: Record<string, unknown> = {
+        type: s.type,
+        status: s.active,
+        category_id: s.categoryId,
+        measurement_unit_id: s.unitId,
+        stock_threshold: s.noStockThreshold ? null : s.stockThreshold,
+        no_stock_threshold: s.noStockThreshold,
+        prices_include_vat: s.pricesIncludeVat,
+        purchase_net_amount: s.purchasePrice,
+        purchase_tax_id: s.purchaseTaxId!,
+        sale_net_amount: s.salePrice,
+        sale_tax_id: s.saleTaxId!,
+        sale_discount_percent: s.saleDiscountPercent || 0,
+        mydata_income_category: s.mydataIncomeCategory,
+        mydata_income_type: s.mydataIncomeType,
+        mydata_income_retail_category: s.mydataIncomeRetailCategory,
+        mydata_income_retail_type: s.mydataIncomeRetailType,
+        warehouses: s.warehouseId ? [{ id: s.warehouseId, quantity: s.quantity }] : [],
+      }
+      if (s.barcode) base.barcode = s.barcode
+      if (s.partNumber) {
+        base.part_number = s.partNumber       // PC ή PN — manufacturer
+        base.mpn_isbn = s.partNumber          // mirror on MPN/ISBN
+      }
+      if (s.supplierProductCode) base.supplier_code = s.supplierProductCode
+      if (s.cpvCode) base.cpv_code = s.cpvCode
+      if (s.taricCode) base.taric_code = s.taricCode
+      if (s.notes) base.notes = s.notes
+      return base
+    }
 
     const payload: Array<Record<string, unknown>> = []
     for (const s of states) {

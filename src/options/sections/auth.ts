@@ -1,5 +1,6 @@
 import { sendMessage } from '@/shared/messages'
 import type { AuthStatus } from '@/shared/messages'
+import { getRuntimeConfig } from '@/core/config'
 
 export async function renderAuth(root: HTMLElement, refresh?: () => void): Promise<void> {
   root.innerHTML = '<h2>Πιστοποίηση</h2>'
@@ -9,6 +10,50 @@ export async function renderAuth(root: HTMLElement, refresh?: () => void): Promi
 
   const authRes = await sendMessage({ type: 'auth/get-status' })
   const auth = (authRes as { ok: true; auth: AuthStatus }).auth
+
+  // Web deployment with OXYGEN_API_TOKEN set as Vercel env var — the proxy
+  // injects the token server-side on every request, so the user doesn't need
+  // to paste one. Show a banner and skip the token input entirely; keep the
+  // connection-test button so the user can still verify end-to-end.
+  const runtime = getRuntimeConfig()
+  if (runtime.serverAuth) {
+    const banner = document.createElement('div')
+    banner.className = 'hint'
+    banner.style.padding = '10px 12px'
+    banner.style.marginBottom = '10px'
+    banner.style.background = 'rgba(60, 180, 120, 0.12)'
+    banner.style.border = '1px solid rgba(60, 180, 120, 0.35)'
+    banner.style.borderRadius = '6px'
+    banner.innerHTML =
+      '<strong>✓ Το Oxygen token διαχειρίζεται ο server.</strong><br>' +
+      'Δεν χρειάζεται να εισάγεις δικό σου token — όλες οι κλήσεις περνούν από το <code>/api/oxygen</code> proxy που κάνει inject το <code>OXYGEN_API_TOKEN</code> env var.'
+    root.appendChild(banner)
+
+    const testRow = document.createElement('div')
+    testRow.className = 'row'
+    const testOnlyBtn = document.createElement('button')
+    testOnlyBtn.className = 'btn'
+    testOnlyBtn.textContent = 'Δοκιμή σύνδεσης'
+    testRow.appendChild(testOnlyBtn)
+    root.appendChild(testRow)
+
+    const statusLine = document.createElement('div')
+    statusLine.className = 'hint'
+    statusLine.style.marginTop = '8px'
+    root.appendChild(statusLine)
+
+    testOnlyBtn.addEventListener('click', async () => {
+      statusLine.textContent = 'Δοκιμή…'
+      const res = await sendMessage({ type: 'auth/test-connection' })
+      if (res.ok) {
+        statusLine.innerHTML = '<span class="ok">✓ Η σύνδεση λειτουργεί.</span>'
+        refresh?.()
+      } else {
+        statusLine.innerHTML = `<span class="err">✗ ${(res as { error: string }).error}</span>`
+      }
+    })
+    return
+  }
 
   const urlLabel = document.createElement('label')
   urlLabel.className = 'field'

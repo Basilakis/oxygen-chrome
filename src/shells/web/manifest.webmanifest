@@ -1,7 +1,7 @@
 {
   "name": "Oxygen Pelatologio — Helper",
   "short_name": "Oxygen Helper",
-  "description": "Αναζήτηση καταλόγου, πρόχειρα παραστατικά και βοηθός AI για το Oxygen Pelatologio.",
+  "description": "Αναζήτηση καταλόγου, ειδοποιήσεις παραστατικών και βοηθός AI για το Oxygen Pelatologio.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

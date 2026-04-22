@@ -3,8 +3,30 @@ export function uid(prefix = ''): string {
   return `${prefix}${Date.now().toString(36)}${rnd}`
 }
 
-export function round2(n: number): number {
-  return Math.round(n * 100) / 100
+export function round2(n: number | string | null | undefined): number {
+  const num = typeof n === 'number' ? n : parseFloat(String(n ?? 0))
+  if (!Number.isFinite(num)) return 0
+  return Math.round(num * 100) / 100
+}
+
+/**
+ * Collapse unknown "should be a list" values into a real array so downstream
+ * `.reduce` / `.map` calls can't throw. The Oxygen API occasionally returns
+ * warehouses (and similar relation fields) as `{}`, `null`, or keyed objects
+ * when the list is empty or serialized by a different path — `?? []` alone
+ * misses those, since only `null`/`undefined` trigger the fallback.
+ */
+export function asArray<T>(v: unknown): T[] {
+  return Array.isArray(v) ? (v as T[]) : []
+}
+
+export function sumStock(
+  warehouses: unknown,
+): number {
+  return asArray<{ quantity?: number }>(warehouses).reduce(
+    (s, w) => s + (w.quantity ?? 0),
+    0,
+  )
 }
 
 export function parseMoney(s: string | number | undefined | null): number {
@@ -18,8 +40,12 @@ export function parseMoney(s: string | number | undefined | null): number {
   return Number.isFinite(n) ? n : 0
 }
 
-export function formatMoney(n: number, currency = '€'): string {
-  return `${currency}${n.toFixed(2).replace('.', ',')}`
+export function formatMoney(n: number | string | null | undefined, currency = '€'): string {
+  // Oxygen API returns money fields as strings ("42.00") in several endpoints;
+  // coerce here so every render site doesn't have to guard against it.
+  const num = typeof n === 'number' ? n : parseFloat(String(n ?? 0))
+  const safe = Number.isFinite(num) ? num : 0
+  return `${currency}${safe.toFixed(2).replace('.', ',')}`
 }
 
 export function todayIso(): string {

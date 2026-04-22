@@ -1,6 +1,6 @@
 import { sendMessage } from '@/shared/messages'
 import type { SearchResults } from '@/shared/messages'
-import { formatMoney, debounce } from '@/shared/util'
+import { formatMoney, debounce, sumStock } from '@/shared/util'
 
 export function renderSearchTab(root: HTMLElement): void {
   root.innerHTML = ''
@@ -86,23 +86,65 @@ export function renderSearchTab(root: HTMLElement): void {
     }
   })
 
+  // Parallel search strategy:
+  //   - Fire local + remote at the same time.
+  //   - Render local as soon as it arrives (typically < 10ms) so the user sees
+  //     instant feedback from the cached catalog.
+  //   - When remote arrives (200-400ms later), merge the fresh results in:
+  //       * Remote products overwrite their local counterparts by id.
+  //       * Remote products that aren't in local get appended.
+  //       * Local products that aren't in remote stay — they might be offline-
+  //         only or just not matched by the API's simpler search.
+  //   - If remote fails, keep the local view. If remote comes back before
+  //     local (rare), we just wait for local then merge.
   let seq = 0
-  const run = debounce(async (q: string) => {
+  const run = debounce((q: string) => {
     const mySeq = ++seq
     if (!q.trim()) {
       results.innerHTML = '<p class="muted">Πληκτρολογήστε για αναζήτηση στον τοπικό κατάλογο.</p>'
       return
     }
-    // Show a loading indicator so short queries get immediate feedback
     results.innerHTML = `<p class="muted">Αναζήτηση για «${escapeHtml(q)}»…</p>`
-    const res = await sendMessage({ type: 'search/catalog', query: q, limit: 20 })
-    // Drop stale responses if user kept typing
-    if (mySeq !== seq) return
-    if (!res.ok) {
-      results.innerHTML = `<p class="muted">Σφάλμα: ${(res as { error: string }).error}</p>`
-      return
+
+    let localDone = false
+    let localResults: SearchResults | null = null
+
+    const renderMerged = (remote: SearchResults | null, fromRemote: boolean) => {
+      if (mySeq !== seq) return
+      if (!localResults && !remote) return
+      const merged = mergeResults(localResults, remote)
+      renderResults(results, merged, fromRemote ? 'live' : 'cached')
     }
-    renderResults(results, (res as { results: SearchResults }).results)
+
+    // Local — expected fast
+    sendMessage({ type: 'search/catalog/local', query: q, limit: 20 })
+      .then((res) => {
+        if (mySeq !== seq) return
+        localDone = true
+        if (res.ok) localResults = (res as { results: SearchResults }).results
+        renderMerged(null, false)
+      })
+      .catch(() => {
+        localDone = true
+      })
+
+    // Remote — expected slow; merges on arrival
+    sendMessage({ type: 'search/catalog/remote', query: q, limit: 20 })
+      .then((res) => {
+        if (mySeq !== seq) return
+        if (!res.ok) return
+        const remote = (res as { results: SearchResults }).results
+        // If local hasn't returned yet, stash remote and render on its own;
+        // renderMerged handles a null localResults by treating it as empty.
+        if (!localDone) {
+          renderMerged(remote, true)
+        } else {
+          renderMerged(remote, true)
+        }
+      })
+      .catch(() => {
+        /* silent — cached local view stays on screen */
+      })
   }, 120)
 
   input.addEventListener('input', () => run(input.value))
@@ -157,12 +199,66 @@ function renderReloadNeeded(el: HTMLElement, tabId: number): void {
   el.appendChild(btn)
 }
 
-function renderResults(container: HTMLElement, results: SearchResults): void {
+/**
+ * Merge local + remote results. Remote products are authoritative and
+ * overwrite their local counterparts by id; remote hits not in local get
+ * appended. Local hits missing from remote stay on screen — they might be
+ * offline-only matches or entries the API's simpler search didn't return.
+ */
+function mergeResults(
+  local: SearchResults | null,
+  remote: SearchResults | null,
+): SearchResults {
+  const merged: SearchResults = {
+    query: (remote ?? local)?.query ?? '',
+    exact: [],
+    fuzzy: [],
+  }
+  const seenExact = new Set<string>()
+  const seenFuzzy = new Set<string>()
+
+  // Remote first so it "wins" for duplicate ids.
+  for (const h of remote?.exact ?? []) {
+    if (seenExact.has(h.product.id)) continue
+    seenExact.add(h.product.id)
+    merged.exact.push(h)
+  }
+  for (const h of local?.exact ?? []) {
+    if (seenExact.has(h.product.id)) continue
+    seenExact.add(h.product.id)
+    merged.exact.push(h)
+  }
+  for (const h of remote?.fuzzy ?? []) {
+    if (seenFuzzy.has(h.product.id) || seenExact.has(h.product.id)) continue
+    seenFuzzy.add(h.product.id)
+    merged.fuzzy.push(h)
+  }
+  for (const h of local?.fuzzy ?? []) {
+    if (seenFuzzy.has(h.product.id) || seenExact.has(h.product.id)) continue
+    seenFuzzy.add(h.product.id)
+    merged.fuzzy.push(h)
+  }
+  return merged
+}
+
+function renderResults(
+  container: HTMLElement,
+  results: SearchResults,
+  freshness: 'cached' | 'live',
+): void {
   container.innerHTML = ''
   if (!results.exact.length && !results.fuzzy.length) {
     container.innerHTML = '<p class="muted">Κανένα αποτέλεσμα.</p>'
     return
   }
+
+  // Small indicator so the user can tell cached results from live ones. The
+  // common case is "cached" appears instantly, then replaced by "live" a few
+  // hundred ms later — visual confirmation that fresh data arrived.
+  const badge = document.createElement('div')
+  badge.className = freshness === 'live' ? 'search-freshness live' : 'search-freshness cached'
+  badge.textContent = freshness === 'live' ? '🟢 Ενημερωμένα από το Oxygen' : '⚪ Από τον τοπικό cache — ανανεώνεται…'
+  container.appendChild(badge)
 
   if (results.exact.length) {
     const h = document.createElement('div')
@@ -197,7 +293,7 @@ function renderHit(p: SearchResults['exact'][number]['product']): HTMLElement {
   top.appendChild(code)
   box.appendChild(top)
 
-  const stock = (p.warehouses ?? []).reduce((s, w) => s + (w.quantity ?? 0), 0)
+  const stock = sumStock(p.warehouses)
   const meta = document.createElement('div')
   meta.className = 'meta'
   meta.textContent = `αγορά ${formatMoney(p.purchase_net_amount ?? 0)} · πώληση ${formatMoney(p.sale_net_amount ?? 0)} · απόθεμα ${stock}`
@@ -209,7 +305,7 @@ function renderHit(p: SearchResults['exact'][number]['product']): HTMLElement {
 
   const addBtn = document.createElement('button')
   addBtn.className = 'btn'
-  addBtn.textContent = 'Στο πρόχειρο'
+  addBtn.textContent = 'Στην ειδοποίηση'
   addBtn.addEventListener('click', async () => {
     let draftId: string | null = null
     const active = await sendMessage({ type: 'drafts/get-active' })

@@ -69,7 +69,7 @@ export async function renderDraftsTab(root: HTMLElement): Promise<void> {
     root.appendChild(buildEditor(active, ctx, () => renderDraftsTab(root)))
   } else if (!drafts.length) {
     root.appendChild(
-      createDiv('muted', 'Δεν υπάρχει ενεργό πρόχειρο. Δημιούργησε ένα νέο ή καρφίτσωσε ένα προϊόν από μια σελίδα.'),
+      createDiv('muted', 'Δεν υπάρχει ενεργή ειδοποίηση. Δημιούργησε μια νέα ή καρφίτσωσε ένα προϊόν από μια σελίδα.'),
     )
   }
 }
@@ -83,7 +83,7 @@ function buildToolbar(_drafts: Draft[], _active: Draft | null, refresh: () => vo
 
   const newBtn = document.createElement('button')
   newBtn.className = 'btn primary'
-  newBtn.textContent = '+ Νέο πρόχειρο'
+  newBtn.textContent = '+ Νέα ειδοποίηση'
   newBtn.addEventListener('click', async () => {
     const res = await sendMessage({ type: 'drafts/create' })
     if (res.ok) refresh()
@@ -136,7 +136,7 @@ function draftRow(d: Draft, isActive: boolean, refresh: () => void): HTMLElement
   del.className = 'btn danger'
   del.textContent = 'Διαγραφή'
   del.addEventListener('click', async () => {
-    if (!confirm(`Διαγραφή πρόχειρου;`)) return
+    if (!confirm(`Διαγραφή ειδοποίησης;`)) return
     await sendMessage({ type: 'drafts/delete', id: d.id })
     refresh()
   })
@@ -186,9 +186,9 @@ function buildEditorHeader(draft: Draft, refresh: () => void): HTMLElement {
     del.className = 'btn danger'
     del.type = 'button'
     del.textContent = '🗑 Διαγραφή'
-    del.title = 'Διαγραφή πρόχειρου'
+    del.title = 'Διαγραφή ειδοποίησης'
     del.addEventListener('click', async () => {
-      if (!confirm('Διαγραφή αυτού του πρόχειρου;')) return
+      if (!confirm('Διαγραφή αυτής της ειδοποίησης;')) return
       await sendMessage({ type: 'drafts/delete', id: draft.id })
       refresh()
     })
@@ -759,7 +759,7 @@ function buildFooter(draft: Draft, refresh: () => void): HTMLElement {
   } else if (unresolved.length) {
     sec.appendChild(createDiv('hint err', `${unresolved.length} γραμμές δεν είναι αντιστοιχισμένες.`))
   } else if (!draft.lines.length) {
-    sec.appendChild(createDiv('hint', 'Το πρόχειρο δεν έχει γραμμές.'))
+    sec.appendChild(createDiv('hint', 'Η ειδοποίηση δεν έχει γραμμές.'))
   }
 
   return sec

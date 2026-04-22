@@ -16,6 +16,8 @@ import './web.css'
 
 import { setLocalDispatcher } from '@/shared/messages'
 import { handle } from '@/background/handler'
+import { loadRuntimeConfig } from '@/core/config'
+import { triggerAutoSyncOnOpen } from '@/core/auto-sync'
 
 import { renderSearchTab } from '@/popup/tabs/search'
 import { renderDraftsTab } from '@/popup/tabs/drafts'
@@ -86,7 +88,16 @@ document.querySelectorAll<HTMLElement>('.tab').forEach((btn) => {
 // to let the body fill the viewport instead of the 420px popup width.
 document.body.dataset.windowMode = 'true'
 
-selectTab('search')
+// Boot: fetch /api/config first so the API client knows whether the deployment
+// has a server-side Oxygen token. Then render the initial tab. We await
+// because the Settings UI decides what to show based on this flag, and the
+// API client skips its "no token" throw when serverAuth is true.
+void loadRuntimeConfig().finally(() => {
+  selectTab('search')
+  // Fire a throttled incremental sync on every page load. Non-blocking —
+  // the UI is already rendered with the cached view.
+  triggerAutoSyncOnOpen()
+})
 
 // PWA service worker registration — ignore failures silently
 if ('serviceWorker' in navigator) {

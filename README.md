@@ -134,10 +134,12 @@ npm run build
 4. Αντιγραφή
 5. Στο Oxygen Helper:
    - **Extension**: δεξί κλικ στο εικονίδιο → Options (ή από το popup → link "Ρυθμίσεις" κάτω δεξιά)
-   - **Web app**: κάτω δεξιά → "Ρυθμίσεις"
-6. Επικόλληση στο πεδίο **"Anthropic API key"** όχι — **"Bearer token"**
+   - **Web app**: καρτέλα **Ρυθμίσεις** → ενότητα **Πιστοποίηση**
+6. Επικόλληση στο πεδίο **"Bearer token"**
 7. Πάτησε **"Δοκιμή σύνδεσης"** — πρέπει να εμφανιστεί `✓ Η σύνδεση λειτουργεί`
 8. Πάτησε **"Αποθήκευση"**
+
+> Το Oxygen token αποθηκεύεται **τοπικά** (`chrome.storage.local` για το extension, `localStorage` για το web app). Δεν φεύγει ποτέ από τον browser σου — οι κλήσεις προς `api.oxygen.gr` γίνονται απευθείας από τον client.
 
 ### 2. Πλήρης συγχρονισμός
 
@@ -181,11 +183,12 @@ npm run build
 
 ### 6. Βοηθός AI
 
-_Μόνο στο extension ή στο web app με δικό σου Anthropic key._
+Το κλειδί του Anthropic μπαίνει σε **διαφορετικό μέρος** για κάθε shell:
 
-- **Extension (BYOK)**: επικόλληση του Anthropic API key στις ρυθμίσεις — αποθηκεύεται τοπικά
-- **Web app (Vercel deployment)**: το key αποθηκεύεται ως environment variable στο Vercel (`ANTHROPIC_API_KEY`), δεν χρειάζεται user input
-- Μοντέλο: Claude Sonnet 4.6 (προεπιλογή), Opus 4.7, ή Haiku 4.5
+- **Extension (BYOK)** — Ρυθμίσεις → Βοηθός AI → επικόλληση του `sk-ant-...` key. Αποθηκεύεται τοπικά στο `chrome.storage.local` και στέλνεται απευθείας στο `api.anthropic.com`. Κάθε χρήστης βάζει το δικό του key.
+- **Web app (self-hosted σε Vercel)** — το key αποθηκεύεται **server-side** ως env var `ANTHROPIC_API_KEY` στο Vercel dashboard. Κάθε κλήση περνάει μέσα από το edge function `api/anthropic/messages.ts` που κάνει inject το key. Ο browser ποτέ δεν το βλέπει. Ο χρήστης δεν χρειάζεται να βάλει τίποτα στο UI.
+
+Μοντέλα: Claude Sonnet 4.6 (προεπιλογή), Opus 4.7, ή Haiku 4.5.
 
 ---
 
@@ -201,6 +204,7 @@ _Μόνο στο extension ή στο web app με δικό σου Anthropic key.
 - **Πρόχειρα** — editor πρόχειρων, λίστα πρόχειρων, υποβολή ως Δελτίο
 - **Βοηθός** — AI chat με JARVIS
 - **Κατάσταση** — σύνδεση, πλήθη δεδομένων, manual sync
+- **Ρυθμίσεις** _(μόνο web app)_ — όλες οι ενότητες settings inline (στο extension είναι σε ξεχωριστή options page)
 
 ### Αναζήτηση προϊόντος
 
@@ -358,54 +362,181 @@ _Μόνο στο extension ή στο web app με δικό σου Anthropic key.
 
 ### Τεχνολογίες
 
-- **TypeScript** + **Vite** + **@crxjs/vite-plugin** (MV3 ext)
+- **TypeScript** + **Vite**
+- **@crxjs/vite-plugin** (MV3 extension build)
 - **MiniSearch** (local full-text search, offline)
 - **idb** (IndexedDB wrapper)
 - **Claude Messages API** για τον AI βοηθό (Sonnet 4.6 default)
-- **Vercel** serverless functions για Anthropic proxy (web app)
+- **Vercel** Edge Functions για Anthropic proxy (web app)
+
+### Αρχιτεκτονική δύο shells με κοινό κώδικα
+
+Το project έχει έναν κώδικα που τρέχει σε **δύο shells**:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           shared code (src/ — 95% του codebase)         │
+│  ┌──────────┐ ┌──────────┐ ┌─────────┐ ┌────────────┐   │
+│  │  popup/  │ │ options/ │ │ shared/ │ │  core/     │   │
+│  │   UI     │ │ sections │ │  types  │ │ kv (auto)  │   │
+│  └──────────┘ └──────────┘ └─────────┘ └────────────┘   │
+│  ┌──────────────────────────────────────────────────┐   │
+│  │           background/handler.ts                  │   │
+│  │  (pure message router — no chrome.* side-effects │   │
+│  │   at load; consumable από ΚΑΙ τα δύο shells)     │   │
+│  └──────────────────────────────────────────────────┘   │
+└──────────────┬──────────────────────────────┬───────────┘
+               │                              │
+     ┌─────────▼──────────┐        ┌─────────▼─────────┐
+     │ Extension shell    │        │ Web shell (PWA)   │
+     │ src/background/    │        │ src/shells/web/   │
+     │ src/content/       │        │ api/anthropic/    │
+     │ src/popup/         │        │ (Vercel edge fn)  │
+     │ manifest.json      │        │ manifest.webmanif.│
+     │ → dist/            │        │ → dist-web/       │
+     └────────────────────┘        └───────────────────┘
+```
+
+**Key shared pieces** (αλλαγή σε ένα σημείο, ενημερώνονται και τα δύο shells):
+
+- [src/background/handler.ts](src/background/handler.ts) — pure message router
+- [src/core/storage/kv.ts](src/core/storage/kv.ts) — `kv()`/`sessionKv()` που αυτόματα πέφτει από `chrome.storage.local` σε `localStorage`
+- [src/core/config.ts](src/core/config.ts) — στο web shell φορτώνει `/api/config` στο boot· στο extension επιστρέφει defaults χωρίς network call
+- [src/shared/messages.ts](src/shared/messages.ts) — `sendMessage()` με `setLocalDispatcher` hook. Στο extension πάει μέσω `chrome.runtime`, στο web κατευθείαν στο `handler.ts`
+- [src/background/api/client.ts](src/background/api/client.ts) — στο extension χτυπάει `api.oxygen.gr` απευθείας· στο web πάει μέσω `/api/oxygen` proxy (με προαιρετικό server-side token)
+- [src/background/agent/client.ts](src/background/agent/client.ts) — `isExtensionContext()` επιλέγει API endpoint: extension → `api.anthropic.com` (BYOK), web → `/api/anthropic/messages` (Vercel proxy)
 
 ### Τοπικό build
 
 ```bash
 npm install
-npm run build          # Chrome extension → dist/
-npm run build:web      # Web app → dist-web/ (όταν υπάρξει — βλέπε docs/web-app-plan.md)
-npm run typecheck
-npm run dev            # HMR mode για development
+
+# Extension
+npm run build              # → dist/ (MV3 bundle έτοιμο για chrome://extensions)
+npm run dev                # HMR dev server + crxjs watcher
+npm run preview            # serve του dist/
+
+# Web app / PWA
+npm run build:web          # → dist-web/ (static bundle + sw.js στο root)
+npm run dev:web            # HMR dev server στο http://localhost:5173
+npm run preview:web        # serve του dist-web/
+
+# Verification
+npm run typecheck          # tsc --noEmit
+npm run test:scrape        # AADE invoice scraper fixture regression
 ```
+
+### Deployment — Chrome Extension
+
+**GitHub Action** ([.github/workflows/build-extension.yml](.github/workflows/build-extension.yml)):
+
+1. Σε κάθε push στο `main` + pull request: τρέχει typecheck + scraper test + build:extension + build:web
+2. Σε push tag `v*` (π.χ. `git tag v0.2.0 && git push --tags`):
+   - Παράγεται `oxygen-helper-v0.2.0.zip` από το `dist/`
+   - Ανεβαίνει ως asset σε νέο GitHub Release (με auto-generated release notes)
+
+Δεν απαιτούνται secrets — το workflow δεν τρέχει κλήσεις σε Anthropic/Oxygen στο CI.
+
+**Manual release:** `npm run build` → zip του `dist/` → upload στο [chrome://extensions](chrome://extensions) σε **Developer mode** → "Load unpacked".
+
+### Deployment — Web app (Vercel)
+
+**Πρώτη φορά:**
+
+1. Login στο [vercel.com](https://vercel.com) και πάτησε **"Add New → Project"**
+2. Import το GitHub repo σου
+3. **Framework Preset**: Other (το `vercel.json` κάνει override όλα όσα χρειάζονται)
+4. Στα **Environment Variables** πρόσθεσε τα κλειδιά που χρειάζεσαι (βλ. πίνακα παρακάτω)
+5. **Deploy** → Vercel τρέχει `npm run build:web`, σερβίρει το `dist-web/` + τα edge functions στο `api/`
+6. Αυτόματο re-deploy σε κάθε push στο `main`
+
+### Environment variables (Vercel)
+
+| Key | Required | Τι κάνει |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | **Ναι** (για τον Βοηθό AI) | Το Anthropic key στέλνεται server-side από το `api/anthropic/messages.ts`. Ο browser δεν το βλέπει ποτέ. [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
+| `OXYGEN_API_TOKEN` | Προαιρετικό | Αν το θέσεις, **όλα** τα Oxygen API calls περνούν από το `api/oxygen/[...path].ts` proxy που κάνει inject αυτό το token. Οι χρήστες δεν χρειάζεται να εισάγουν δικό τους token — το UI το εντοπίζει μέσω `/api/config` στο boot και αποκρύπτει το token input. Χρήση: **single-owner** deployment (εσύ είσαι ο μόνος χρήστης σε όλα τα devices). Αν το αφήσεις κενό, το app δουλεύει σε **multi-user** mode: κάθε visitor βάζει το δικό του Bearer token στις Ρυθμίσεις (αποθηκεύεται στο δικό του `localStorage`). |
+| `ACCESS_PWD` | Προαιρετικό | Αν το θέσεις, το `middleware.ts` μπλοκάρει όλο το site με **HTTP Basic Auth**. Ο browser εμφανίζει popup — βάζεις οποιοδήποτε username και το password που όρισες. Προστατεύει ένα personal deployment από random visitors. Συνιστάται σε συνδυασμό με `OXYGEN_API_TOKEN` (αλλιώς ο κώδικάς σου είναι public αλλά τα δεδομένα σου όχι). |
+
+> Το middleware + οι env vars ισχύουν **μόνο** στο web deployment. Το Chrome extension αγνοεί εντελώς αυτό το setup — τρέχει στον browser σου με το δικό σου BYOK token.
+
+**Τι κάνει το [vercel.json](vercel.json):**
+
+- `buildCommand: npm run build:web`
+- `outputDirectory: dist-web`
+- `/sw.js` → `cache-control: no-cache` (νέες deploys ενημερώνουν αμέσως τον service worker)
+- `/assets/*` → `cache-control: max-age=31536000, immutable` (hashed filenames)
+
+**Τι αποκλείει το [.vercelignore](.vercelignore):** extension-only κώδικας (`src/background/index.ts`, `src/content/`, `src/popup/`, `src/options/`, `manifest.json`, `dist/`, `tests/`, `docs/`). Το Vercel deploy έχει **μόνο** ό,τι χρειάζεται για το web shell + το proxy.
+
+### Secrets & tokens — τι πάει πού
+
+| Secret | Αποθήκευση | Ποιος το βλέπει |
+|---|---|---|
+| **Oxygen Bearer token (extension)** | `chrome.storage.local` στον browser | Μόνο ο χρήστης του extension — κάθε browser/device ξεχωριστό setup |
+| **Oxygen Bearer token (web, multi-user mode)** | `localStorage` στον browser του visitor | Μόνο ο visitor — δεν φεύγει από το browser του |
+| **Oxygen Bearer token (web, single-owner mode)** | `OXYGEN_API_TOKEN` env var στο Vercel | Μόνο το deployment — ο browser ποτέ. Ο proxy [api/oxygen/[...path].ts](api/oxygen/[...path].ts) το κάνει inject στο `Authorization` header |
+| **Anthropic API key (extension, BYOK)** | `chrome.storage.local` στον browser | Μόνο ο χρήστης του extension |
+| **Anthropic API key (web)** | `ANTHROPIC_API_KEY` env var στο Vercel | Το deployment — ο browser ποτέ. [api/anthropic/messages.ts](api/anthropic/messages.ts) κάνει inject το key στο `x-api-key` |
+| **Access password (web only)** | `ACCESS_PWD` env var στο Vercel | Κανένας — το [middleware.ts](middleware.ts) το συγκρίνει με το basic-auth header που στέλνει ο browser |
+
+> **Σημείωση κόστους:** στο self-hosted Vercel deployment με κοινό `ANTHROPIC_API_KEY`, όλα τα tokens του JARVIS χρεώνονται στον ιδιοκτήτη του Anthropic account. Για πολλαπλούς χρήστες βάλε rate-limit στο edge function ή μοιρασμένο BYOK UI.
+
+### Web deployment modes — ποιο setup σου ταιριάζει
+
+| Χρήση | `OXYGEN_API_TOKEN` | `ACCESS_PWD` | Συμπεριφορά |
+|---|---|---|---|
+| **Multi-user** (κάθε visitor έχει δικό του Oxygen λογαριασμό) | δεν ορίζεται | συνήθως δεν ορίζεται | Κάθε visitor βάζει το δικό του token στις Ρυθμίσεις. Ο καθένας βλέπει μόνο τα δικά του δεδομένα. Το site είναι public — όποιος ανοίξει το URL χωρίς token βλέπει empty state. |
+| **Single-owner, public URL** | ορίζεται | δεν ορίζεται | Εσύ είσαι ο μόνος που πρέπει να χρησιμοποιεί το app, αλλά το URL είναι ανοιχτό. **Κίνδυνος**: οποιοσδήποτε βρει το URL βλέπει τα δεδομένα σου. Αποδεκτό μόνο αν το URL είναι obscure. |
+| **Single-owner, protected** _(συνιστάται για personal deployments)_ | ορίζεται | ορίζεται | Εσύ είσαι ο μόνος, και το basic-auth αποκλείει όλους τους άλλους πριν καν φτάσουν στο HTML. Ανοίγεις το URL, ο browser σου ζητάει password, το βάζεις, το app λειτουργεί χωρίς κανένα άλλο setup. |
+| **Multi-user, κλειστή ομάδα** | δεν ορίζεται | ορίζεται | Όλοι περνούν από το ίδιο basic-auth password, μετά ο καθένας βάζει το δικό του Oxygen token. |
 
 ### Regression testing
 
 ```bash
-npx tsx tests/scrape.test.mjs    # AADE invoice scraper fixture tests
+npm run test:scrape
 ```
 
-### Deployment
-
-- **Vercel**: αυτόματο deploy σε push στο `main`. Απαιτεί `ANTHROPIC_API_KEY` ως env var στο dashboard.
-- **GitHub Release**: push tag `v*.*.*` → GitHub Action παράγει `.zip` και το ανεβάζει ως release asset.
+Τρέχει το AADE invoice scraper πάνω σε static fixtures στο [tests/fixtures/](tests/fixtures/). Απαιτείται prasing να παραμένει σταθερό μετά από κάθε αλλαγή στον scraper.
 
 ### Δομή κώδικα
 
 ```
 src/
-├── shared/              types, messages, constants, utils
-├── background/          service worker, message router
-│   ├── api/            Oxygen REST client
-│   ├── search/         MiniSearch index
-│   ├── sku/            SKU generation strategies
-│   ├── drafts/         drafts manager
-│   ├── sync/           bootstrap + incremental sync
-│   ├── agent/          Claude agent + tools + sessions
-│   └── handlers/       flow-specific handlers
-├── content/             content scripts (scraper, picker, auto-badge)
-│   ├── scraper/        AADE invoice modal scraper
-│   └── overlays/       shadow-DOM overlays (lookup card, prefill modal)
-├── popup/               popup UI (4 tabs)
-└── options/             options page (6 sections)
+├── shared/                  types, messages, constants, utils (extension + web)
+├── core/
+│   └── storage/kv.ts        chrome.storage ↔ localStorage auto-detect
+├── background/
+│   ├── handler.ts           pure message router (no chrome.* side-effects)
+│   ├── index.ts             SW lifecycle only (onInstalled, alarms, menus)
+│   ├── api/                 Oxygen REST client
+│   ├── search/              MiniSearch index
+│   ├── sku/                 SKU generation strategies
+│   ├── drafts/              drafts manager
+│   ├── sync/                bootstrap + incremental sync
+│   ├── agent/               Claude agent + tools + sessions
+│   │   └── client.ts        routes extension → api.anthropic.com, web → /api/anthropic/messages
+│   └── handlers/            flow-specific handlers
+├── content/                 content scripts (extension only)
+│   ├── scraper/             AADE invoice modal scraper
+│   └── overlays/            shadow-DOM overlays (lookup card, prefill modal)
+├── popup/                   popup UI (4 tabs — reused ως-έχει στο web)
+├── options/                 options page (6 sections — reused ως-έχει στο web)
+└── shells/
+    └── web/                 web shell entry (index.html, main.ts, sw.ts, manifest)
+
+api/
+└── anthropic/messages.ts    Vercel edge function (key injection proxy)
+
+manifest.json                Chrome MV3 manifest (extension-only)
+vite.config.ts               extension build config (crxjs plugin)
+vite.config.web.ts           web build config (separate root, sw.ts at /sw.js)
+vercel.json                  deploy config για Vercel
+.vercelignore                αποκλείει extension files από το deploy
+.github/workflows/           GitHub Actions για Chrome zip releases
 ```
 
-Η πλήρης αρχιτεκτονική για τη μετάβαση σε web app είναι στο [docs/web-app-plan.md](docs/web-app-plan.md).
+Η πλήρης σχεδιαστική απόφαση για το split είναι στο [docs/web-app-plan.md](docs/web-app-plan.md).
 
 ---
 

@@ -27,7 +27,7 @@ export async function renderDiagnostics(root: HTMLElement): Promise<void> {
   })
 
   resetBtn.addEventListener('click', async () => {
-    if (!confirm('Αυτό διαγράφει ΟΛΑ τα τοπικά δεδομένα (βάση, search index, πρόχειρα). Συνέχεια;')) return
+    if (!confirm('Αυτό διαγράφει ΟΛΑ τα τοπικά δεδομένα (βάση, search index, ειδοποιήσεις). Συνέχεια;')) return
     const res = await sendMessage({ type: 'diagnostics/reset' })
     out.textContent = JSON.stringify(res, null, 2)
   })

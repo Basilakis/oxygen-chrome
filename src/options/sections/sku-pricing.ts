@@ -104,10 +104,16 @@ export async function renderSkuPricing(root: HTMLElement): Promise<void> {
   const updateVisibility = () => {
     const s = stratSel.value as SkuStrategy
     stratHint.textContent = STRATEGY_OPTIONS.find((o) => o.value === s)?.hint ?? ''
-    const wantsPrefix = s === 'prefixed' || s === 'category' || (s === 'auto' && (settings.sku_prefix ?? '').length > 0)
-    const wantsPadding = s === 'prefixed' || s === 'category' || s === 'auto'
-    prefixWrap.style.display = wantsPrefix ? '' : ''
-    padWrap.style.display = wantsPadding ? '' : ''
+    // Manual prefix is only meaningful for 'prefixed' — 'category' derives it
+    // from the category name, 'numeric' has no prefix, and 'auto' reads the
+    // dominant pattern from the catalog so a manual override would defeat it.
+    const wantsPrefix = s === 'prefixed'
+    // Padding width applies wherever we emit a zero-padded sequential suffix.
+    // Plain numeric and auto mirror whatever the catalog already uses, so the
+    // width is irrelevant there.
+    const wantsPadding = s === 'prefixed' || s === 'category'
+    prefixWrap.style.display = wantsPrefix ? '' : 'none'
+    padWrap.style.display = wantsPadding ? '' : 'none'
   }
   updateVisibility()
 
