@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice Modal Fixture</title>
+</head>
+<body>
+<!--
+  Real AADE "Προβολή Παραστατικού" modal body observed on Oxygen.
+  Header info (supplier VAT, date, MARK, UID) lives in the surrounding modal chrome,
+  which we don't have a sample of yet — only the line-items table is captured here.
+  Update this fixture when you grab a fuller modal snapshot so we can anchor header
+  extraction more reliably.
+-->
+<div role="dialog">
+  <h3>Προβολή Παραστατικού</h3>
+
+  <table class="tableThinOpen noHover" style="width: 100%; font-size: 12px;">
+    <tbody>
+      <tr>
+        <td class="text-left"><b>#</b></td>
+        <td class="text-left"><b>ΚΩΔ.</b></td>
+        <td class="text-left"><b>ΠΕΡΙΓΡΑΦΗ</b></td>
+        <td class="text-center"><b>ΜΜ.</b></td>
+        <td class="text-right"><b>ΠΟΣΟΤ.</b></td>
+        <td class="text-right"><b class="cursor-help" title="Το πεδίο αυτό δεν το επιστρέφει η ΑΑΔΕ&lt;br/&gt;και μπορεί να έχει μικρή απόκλιση εξαιτίας&lt;br/&gt;στρογγυλοποίησης στα 2 δεκαδικά ψηφία. ">ΤΙΜ. ΜΟΝ.</b></td>
+        <td class="text-right"><b>ΑΞΙΑ</b></td>
+        <td class="text-right"><b>ΦΠΑ</b></td>
+        <td class="text-right"><b>ΣΥΝΟΛΟ</b></td>
+      </tr>
+
+      <tr>
+        <td class="text-left">1</td>
+        <td class="text-left">0444-0412020003</td>
+        <td class="text-left">ΜΑΣΤΟΙ ΑΡΣ. 20x2.00 3/4"  PEX-AL PRESS</td>
+        <td class="text-center">TMX</td>
+        <td class="text-right">6</td>
+        <td class="text-right">2.42</td>
+        <td class="text-right">14.52</td>
+        <td class="text-right">3.48<div style="font-size: 10px;">24.00 %</div></td>
+        <td class="text-right">18.00</td>
+      </tr>
+
+      <tr>
+        <td colspan="9" class="bg2-grey"></td>
+      </tr>
+
+      <tr>
+        <td colspan="8" class="text-right b-bottom-n"><b>ΚΑΘΑΡΗ ΑΞΙΑ</b></td>
+        <td class="text-right"><b>14.52</b></td>
+      </tr>
+
+      <tr>
+        <td colspan="8" class="text-right b-bottom-n"><b>ΑΞΙΑ ΦΠΑ</b></td>
+        <td class="text-right"><b>3.48</b></td>
+      </tr>
+
+      <tr>
+        <td colspan="8" class="text-right b-bottom-n"><b>ΣΥΝΟΛΙΚΗ ΑΞΙΑ</b></td>
+        <td class="text-right"><b>18.00</b></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

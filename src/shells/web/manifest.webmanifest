@@ -1,0 +1,20 @@
+{
+  "name": "Oxygen Pelatologio — Helper",
+  "short_name": "Oxygen Helper",
+  "description": "Αναζήτηση καταλόγου, πρόχειρα παραστατικά και βοηθός AI για το Oxygen Pelatologio.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2c2d4e",
+  "theme_color": "#2c2d4e",
+  "lang": "el",
+  "icons": [
+    {
+      "src": "/icons/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Oxygen Warehouse Helper",
+  "version": "0.1.0",
+  "description": "Oxygen Pelatologio integration: invoice-to-warehouse, catalog lookup, shopping-list drafts.",
+  "icons": {
+    "16": "icons/icon.png",
+    "32": "icons/icon.png",
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "contextMenus",
+    "notifications",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://*.oxygen.gr/*",
+    "https://api.anthropic.com/*",
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "src/background/index.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Oxygen Warehouse Helper",
+    "default_icon": {
+      "16": "icons/icon.png",
+      "32": "icons/icon.png"
+    }
+  },
+  "options_page": "src/options/index.html",
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/oxygen-app.ts"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/web-capture.ts"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/overlays/*", "src/popup/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

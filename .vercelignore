@@ -1,0 +1,35 @@
+# Keep the Vercel deploy focused on the web shell + serverless proxy.
+# Everything else (extension source, packaged extension, tests, docs, plans)
+# is either irrelevant to the deploy or would bloat the function bundle.
+
+# Extension-only source
+src/background/index.ts
+src/content/
+src/popup/
+src/options/
+
+# Build artifacts
+dist/
+node_modules/
+
+# Chrome extension manifest + store assets
+manifest.json
+/.crx/
+
+# Tests, docs, planning
+tests/
+docs/
+project-plan.md
+README.md
+
+# Local envs + editor junk
+.env
+.env.local
+.DS_Store
+.vscode/
+.idea/
+
+# Git artifacts
+.git/
+.github/
+.gitignore

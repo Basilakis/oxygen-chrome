@@ -1,0 +1,39 @@
+/* Web-specific tweaks on top of popup.css.
+   The popup CSS already has a data-window-mode="true" styling that fills
+   the viewport — main.ts sets that attribute on <body> so we get it for free. */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body[data-window-mode="true"] {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.web-settings-section {
+  margin-top: 14px;
+}
+
+/* Keep tabs sticky so the user doesn't lose the nav while scrolling a tall
+   Πρόχειρα / Ρυθμίσεις panel. */
+.tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+@media (max-width: 600px) {
+  .brand-badge {
+    display: none;
+  }
+  .tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .tab {
+    flex: 0 0 auto;
+  }
+}

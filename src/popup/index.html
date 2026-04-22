@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="el">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Oxygen Helper</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header class="page-header">
+      <div class="brand">
+        <img class="brand-icon" src="/icons/icon.png" alt="" width="28" height="28" />
+        <div class="brand-stack">
+          <span class="brand-name">OXYGEN</span>
+          <span class="brand-sub">PELATOLOGIO</span>
+        </div>
+        <span class="brand-badge">Warehouse Helper</span>
+      </div>
+    </header>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="search" role="tab">Αναζήτηση</button>
+      <button class="tab" data-tab="drafts" role="tab">Πρόχειρα</button>
+      <button class="tab" data-tab="agent" role="tab">Βοηθός</button>
+      <button class="tab" data-tab="status" role="tab">Κατάσταση</button>
+    </nav>
+    <main>
+      <section id="tab-search" class="tab-panel active"></section>
+      <section id="tab-drafts" class="tab-panel"></section>
+      <section id="tab-agent" class="tab-panel"></section>
+      <section id="tab-status" class="tab-panel"></section>
+    </main>
+    <footer>
+      <a href="#" id="open-options">Ρυθμίσεις</a>
+    </footer>
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>
