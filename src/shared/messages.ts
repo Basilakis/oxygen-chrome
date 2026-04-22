@@ -107,12 +107,38 @@ export type Message =
       type: 'flow1/suggest-sku'
       description: string
       categoryName?: string
+      /**
+       * How many SKUs have already been "reserved" earlier in the current
+       * batch. The generator adds this to its max+1 increment so sequential
+       * calls during a multi-line AADE import each get a unique number.
+       */
+      offset?: number
+    }
+  | {
+      /**
+       * Look up a variation family for a product name. If a product matching
+       * the name already exists in the catalog AND uses the `code.N` pattern
+       * for its children, return the shared base (`code`) and the list of
+       * existing suffixes so the caller can pick the next one.
+       */
+      type: 'flow1/find-variation-family'
+      description: string
     }
   | { type: 'sku/preview'; categoryName?: string }
   | {
       type: 'flow1/create-products'
       supplier_id: Id
       products: Array<Partial<Product> & { name: string; code: string; sale_tax_id: Id; sale_net_amount: number }>
+    }
+  | {
+      type: 'flow1/update-products'
+      updates: Array<{
+        product_id: Id
+        add_to_warehouse_id?: Id
+        add_quantity?: number
+        new_purchase_net_amount?: number
+        new_sale_net_amount?: number
+      }>
     }
   | { type: 'flow1/scrape-detected'; invoice: ScrapedInvoice }
   | { type: 'drafts/list' }

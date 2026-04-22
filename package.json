@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "preview:web": "vite preview --config vite.config.web.ts",
     "typecheck": "tsc --noEmit",
-    "test:scrape": "tsx tests/scrape.test.mjs"
+    "test:scrape": "tsx tests/scrape.test.mjs",
+    "test:parse-money": "tsx tests/parse-money.test.mjs",
+    "test": "npm run test:parse-money && npm run test:scrape"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.25",

@@ -47,7 +47,24 @@
       "Bash(curl -sS -o /tmp/r.txt -w 'HTTP %{http_code} | content-type: %{content_type}\\\\n' -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Accept: application/json' 'https://api.oxygen.gr/v1/__TRACKED_VAR__?per_page=1')",
       "Bash(curl -sS -o /tmp/r.txt -w 'HTTP %{http_code}\\\\n' -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Content-Type: application/json' -H 'Accept: application/json' -X POST -d '{}' https://api.oxygen.gr/v1/expenses)",
       "Bash(npm run *)",
-      "Bash(grep -oE '\\(barcode|part_number|mpn_isbn|notes\\)[^a-zA-Z0-9_][^,;}]{1,30}' dist/assets/prefill-modal-CjxGMSAx.js)"
+      "Bash(grep -oE '\\(barcode|part_number|mpn_isbn|notes\\)[^a-zA-Z0-9_][^,;}]{1,30}' dist/assets/prefill-modal-CjxGMSAx.js)",
+      "Bash(node -e \"const t = require\\('fs'\\).readFileSync\\('dist/assets/oxygen-app.ts-D4p8JEwD.js','utf8'\\); const m = t.match\\(/Δημ[Ͱ-Ͽ]+[^\\\\\"]{0,30}/g\\); console.log\\(m\\);\")",
+      "Bash(node -e \"const t = require\\('fs'\\).readFileSync\\('dist/assets/oxygen-app.ts-D4p8JEwD.js','utf8'\\); console.log\\('imports chunks:', t.match\\(/import\\\\s*\\\\\\([^\\)]+\\\\\\)|import[^;]+['\\\\\"][^'\\\\\"]+['\\\\\"]/g\\)?.slice\\(0,5\\)\\)\")",
+      "WebFetch(domain:docs.oxygen.gr)",
+      "WebSearch",
+      "Bash(curl -s \"https://docs.oxygen.gr/\")",
+      "Bash(curl -s \"https://docs.oxygen.gr/oxygen-api.json\" -o /tmp/oxygen-api.json)",
+      "Bash(curl -s \"https://docs.oxygen.gr/oxygen-api.json\" -o tmp-api/oxygen-api.json)",
+      "Bash(npm test *)",
+      "Bash(curl -sS -i -X DELETE -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Accept: application/json' https://api.oxygen.gr/v1/products-categories/c345a490-2b75-47ba-9e7c-e4983aa7249e)",
+      "Bash(curl -sS -i -X PUT -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{\"status\":false}' https://api.oxygen.gr/v1/products-categories/c345a490-2b75-47ba-9e7c-e4983aa7249e)",
+      "Bash(curl -sS -i -X PATCH -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{\"status\":false}' https://api.oxygen.gr/v1/products-categories/c345a490-2b75-47ba-9e7c-e4983aa7249e)",
+      "Bash(curl -sS -X GET -H 'Authorization: Bearer e1f43dbd-3db1-4f8e-99fd-a4a29eaf4498' -H 'Accept: application/json' https://api.oxygen.gr/v1/products/e693e178-a185-456f-8f2d-9f41874d9e72)",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data', c=>d+=c\\).on\\('end', \\(\\)=>{const o=JSON.parse\\(d\\); console.log\\('group:', o.group\\); console.log\\('variations:', JSON.stringify\\(o.variations\\)\\)}\\)\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); console.log\\('Found', list.length, 'products:'\\); list.forEach\\(p=>console.log\\(' -', p.code, '|', p.name, '| group:', p.group, '| variations:', JSON.stringify\\(p.variations?.slice\\(0,2\\)\\)\\)\\)}\\)\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); console.log\\('Full group object for first hit:'\\); console.log\\(JSON.stringify\\(list[0]?.group, null, 2\\)\\); console.log\\('---'\\); console.log\\('Full variations:'\\); console.log\\(JSON.stringify\\(list[0]?.variations, null, 2\\)\\); console.log\\('---'\\); console.log\\('code:', list[0]?.code\\); console.log\\('id:', list[0]?.id\\); }\\)\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); const hit = list.find\\(p=>p.code==='6.1'\\) || list[0]; console.log\\('Product:', hit.code, hit.name\\); console.log\\('id:', hit.id\\); console.log\\('group:'\\); console.log\\(JSON.stringify\\(hit.group, null, 2\\)\\); console.log\\('---'\\); console.log\\('variations:', JSON.stringify\\(hit.variations, null, 2\\)\\)}\\)\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); console.log\\('group:', JSON.stringify\\(o.group\\)\\)}\\)\")"
     ]
   }
 }

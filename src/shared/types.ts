@@ -278,6 +278,13 @@ export interface Settings {
   sku_prefix: string
   sku_seq_padding: number
   markup_percent: number
+  /**
+   * Per-category markup overrides. Keyed by category id → percent. Used when
+   * creating products: if a line's category has an entry here, that percent
+   * wins over `markup_percent`. Missing entries fall through to the global.
+   * The user can still override per-line in the AADE prefill modal.
+   */
+  category_markup_percents?: Record<Id, number>
   auto_link_suppliers: boolean
   auto_detect_products: boolean
   sync_interval_minutes: number

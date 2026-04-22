@@ -1,0 +1,5614 @@
+{
+  "openapi": "3.0.3",
+  "x-stoplight": {
+    "id": "yolj5v0jbyewi"
+  },
+  "info": {
+    "title": "Oxygen Pelatologio API",
+    "description": "Oxygen Pelatologio ERP API enables 3rd party application to connect programmatically to the application and:\n* Create or Update data without the need to interact with the interface\n* Connect 3rd party applications, such as e-shop or website to automate orders or invoicing\n",
+    "version": "1.12.0",
+    "contact": {
+      "name": "Oxygen API Support",
+      "email": "support@oxygen.gr"
+    }
+  },
+  "servers": [
+    {
+      "description": "Oxygen Pelatologio SANDBOX API",
+      "url": "https://sandbox-api.oxygen.gr/v1"
+    },
+    {
+      "description": "Oxygen Pelatologio API",
+      "url": "https://api.oxygen.gr/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Business Areas"
+    },
+    {
+      "name": "Contacts"
+    },
+    {
+      "name": "Credit Notes"
+    },
+    {
+      "name": "Invoices"
+    },
+    {
+      "name": "Logos"
+    },
+    {
+      "name": "Notices"
+    },
+    {
+      "name": "Numbering Sequences"
+    },
+    {
+      "name": "Oxygen Payments"
+    },
+    {
+      "name": "Payment Methods"
+    },
+    {
+      "name": "Product Categories"
+    },
+    {
+      "name": "Products"
+    },
+    {
+      "name": "Taxes"
+    },
+    {
+      "name": "Variations"
+    },
+    {
+      "name": "VAT Check"
+    },
+    {
+      "name": "Warehouses"
+    }
+  ],
+  "externalDocs": {
+    "description": "AADE Manual",
+    "url": "https://www.aade.gr/sites/default/files/2024-07/myDATA%20API%20Documentation%20v1.0.9_official_erp.pdf"
+  },
+  "paths": {
+    "/contacts": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "List all the contacts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "Search by id. Accepts multiple ids separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vat",
+            "description": "Search by contact VAT",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "description": "Search by contact code. Accepts multiple contact codes separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "email",
+            "description": "Search by email.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Result per request. Max 2000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "The page number to retrieve",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ContactItem"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string"
+                        },
+                        "last": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "string"
+                        },
+                        "next": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "from": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "path": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "to": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        },
+        "operationId": ""
+      },
+      "post": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Create a new contact",
+        "responses": {
+          "201": {
+            "description": "Contact created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "is_client",
+                  "is_supplier",
+                  "name",
+                  "surname",
+                  "company_name",
+                  "profession",
+                  "vat_number",
+                  "tax_office",
+                  "street",
+                  "number",
+                  "city",
+                  "zip_code",
+                  "country"
+                ],
+                "properties": {
+                  "code": {
+                    "description": "Contact code. If empty a random will be created",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "The type of the contact. 1 - Private, 2 - Company",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
+                  "is_client": {
+                    "description": "If the contact is a client or not. true or 1 - is a client, false - it is not a client",
+                    "type": "boolean"
+                  },
+                  "is_supplier": {
+                    "description": "If the contact is a supplier or not. true - is a supplier, false - it is not a supplier",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "Name of the contact. Required only if type is 1.",
+                    "type": "string"
+                  },
+                  "surname": {
+                    "description": "Surname of the contact. Required only if type is 1.",
+                    "type": "string"
+                  },
+                  "company_name": {
+                    "description": "The name of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "nickname": {
+                    "description": "The name of the nickname",
+                    "type": "string",
+                    "maximum": 100
+                  },
+                  "profession": {
+                    "description": "The profession of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "vat_number": {
+                    "description": "The VAT of the contact. If the contact is a non Greek company, the country's 2 letter code should be used as prefix. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "tax_office": {
+                    "description": "The tax officer of the contact. Required only if type is 2 and company is from Greece.",
+                    "type": "string"
+                  },
+                  "telephone": {
+                    "description": "The telephone of the contact",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "mobile": {
+                    "description": "The mobile number of the contact",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "email": {
+                    "description": "The email of the contact",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "street": {
+                    "description": "The street of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "number": {
+                    "description": "The number of the contact. Required only if type is 2 and street is present",
+                    "type": "string"
+                  },
+                  "city": {
+                    "description": "The city of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "zip_code": {
+                    "description": "The zip code of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "country": {
+                    "description": "The country of the contact (2letter)",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contacts/{contact_id}": {
+      "get": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Retrieve a specific contact",
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "description": "The ID of the contact to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Contacts"
+        ],
+        "summary": "Update a contact. All values are needed.",
+        "responses": {
+          "201": {
+            "description": "Contact updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "type",
+                  "is_client",
+                  "is_supplier",
+                  "name",
+                  "surname",
+                  "company_name",
+                  "profession",
+                  "vat_number",
+                  "tax_office",
+                  "street",
+                  "number",
+                  "city",
+                  "zip_code",
+                  "country"
+                ],
+                "properties": {
+                  "code": {
+                    "description": "Contact code. If empty a random will be created",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "The type of the contact. 1 - Private, 2 - Company",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2
+                  },
+                  "is_client": {
+                    "description": "If the contact is a client or not. true or 1 - is a client, false - it is not a client",
+                    "type": "boolean"
+                  },
+                  "is_supplier": {
+                    "description": "If the contact is a supplier or not. true - is a supplier, false - it is not a supplier",
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "description": "Name of the contact. Required only if type is 1.",
+                    "type": "string"
+                  },
+                  "surname": {
+                    "description": "Surname of the contact. Required only if type is 1.",
+                    "type": "string"
+                  },
+                  "company_name": {
+                    "description": "The name of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "profession": {
+                    "description": "The profession of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "vat_number": {
+                    "description": "The VAT of the contact. If the contact is a non Greek company, the country's 2 letter code should be used as prefix. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "tax_office": {
+                    "description": "The tax officer of the contact. Required only if type is 2 and company is from Greece.",
+                    "type": "string"
+                  },
+                  "telephone": {
+                    "description": "The telephone of the contact",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "mobile": {
+                    "description": "The mobile number of the contact",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "email": {
+                    "description": "The email of the contact",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "street": {
+                    "description": "The street of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "number": {
+                    "description": "The number of the contact. Required only if type is 2 and street is present",
+                    "type": "string"
+                  },
+                  "city": {
+                    "description": "The city of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "zip_code": {
+                    "description": "The zip code of the contact. Required only if type is 2",
+                    "type": "string"
+                  },
+                  "country": {
+                    "description": "The country of the contact (2letter)",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Retrieve all issued invoices",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "Search by id. Accepts multiple ids separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contact_id",
+            "description": "Search by contact ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contact_code",
+            "description": "Search by contact code",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "description": "Search from a specific date (including the date). Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "description": "Search to a specific date (including the date). Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Search exactly the specific date. Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "description": "Search by invoice number. Accepts multiple invoice numbers separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "numbering_sequence",
+            "description": "Search by numbering_sequence. Accepts the numbering sequence id.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Result per request. Max 2000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "description": "The page number",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InvoiceItem"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string"
+                        },
+                        "last": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "string"
+                        },
+                        "next": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "from": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "path": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "to": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Create a new invoice",
+        "responses": {
+          "201": {
+            "description": "Invoice created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "description": "The number of the invoice. If it's empty then the next sequentional number will be used according to the invoices type and sequence.",
+                    "type": "integer"
+                  },
+                  "numbering_sequence_id": {
+                    "description": "The numbering sequence id of the invoice",
+                    "type": "string"
+                  },
+                  "issue_date": {
+                    "description": "The issue date of the invoice",
+                    "type": "string",
+                    "format": "date",
+                    "example": "2021-07-21"
+                  },
+                  "document_type": {
+                    "description": "The type of the invoice.",
+                    "type": "string",
+                    "enum": [
+                      "s (Invoice for Services)",
+                      "p (Invoice for product sales and/or services)",
+                      "rs (Receipt (issued to private customers) for services)",
+                      "rp (Receipt (issued to private customers) for products and/or services)"
+                    ]
+                  },
+                  "language": {
+                    "description": "The language of the invoice",
+                    "type": "string",
+                    "enum": [
+                      "el",
+                      "en"
+                    ]
+                  },
+                  "mydata_document_type": {
+                    "description": "The document type for MyData as seen at table 8.1 in AADE manual",
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "payment_method_id": {
+                    "description": "The id of the payment method to associate with the invoice",
+                    "type": "string"
+                  },
+                  "description": {
+                    "description": "A description about the document. If left blank the description of the first item will be chosen.",
+                    "type": "string",
+                    "maximum": 200
+                  },
+                  "business_area_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "mt6hefp7r2zx9"
+                    },
+                    "format": "uuid"
+                  },
+                  "contact_id": {
+                    "description": "The id of the contact (client) that the invoice will be issued",
+                    "type": "string"
+                  },
+                  "logo_id": {
+                    "description": "The id of the logo to be used. If it's empty the default logo will be used.",
+                    "type": "string"
+                  },
+                  "items": {
+                    "description": "List of items / products / services",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "description": "The id or code of the item",
+                          "type": "string"
+                        },
+                        "warehouse_id": {
+                          "description": "The id of the warehouse the quantity will be removed. If skipped the default warehouse will be used.",
+                          "type": "string"
+                        },
+                        "description": {
+                          "description": "The description of the item. Not required if valid product code is provided.",
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "description": "The quantity of the item",
+                          "type": "number"
+                        },
+                        "unit_net_value": {
+                          "description": "The item unit price without VAT. Not required if valid product code is provided.",
+                          "type": "number"
+                        },
+                        "tax_id": {
+                          "description": "The ID of the tax to be applied. Not required if valid product code is provided.",
+                          "type": "string"
+                        },
+                        "discount_type": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "jfk5eyl1yutim"
+                          },
+                          "enum": [
+                            "percent",
+                            "amount"
+                          ]
+                        },
+                        "discount_value": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "msxkrhpd1ljcw"
+                          }
+                        },
+                        "net_amount_pre_discount": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "464ypkkmao4cp"
+                          },
+                          "description": "The items' price before discount without VAT."
+                        },
+                        "net_amount": {
+                          "description": "The items' price without VAT. Not required if valid product code is provided.",
+                          "type": "number"
+                        },
+                        "vat_amount": {
+                          "description": "The amount of the VAT. Not required if valid product code is provided.",
+                          "type": "number"
+                        },
+                        "measurement_unit_id": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "ybj7tqy9z9zm4"
+                          },
+                          "format": "uuid"
+                        },
+                        "mydata_classification_category": {
+                          "description": "The mydata category from table 8.8 from AADE manual",
+                          "type": "string"
+                        },
+                        "mydata_classification_type": {
+                          "description": "The mydata type from table 8.9 from AADE manual",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "notice_id": {
+                    "description": "Notice ID to connect with",
+                    "type": "string"
+                  },
+                  "is_paid": {
+                    "description": "If it is set to true a receipt will be created and the invoice will be marked as paid. It does not work with Self Invoices (type self_inv)",
+                    "type": "boolean"
+                  },
+                  "comments": {
+                    "description": "Comments to be printed on the invoice",
+                    "type": "string"
+                  },
+                  "infobox": {
+                    "description": "Brief information to be printed on the invoice",
+                    "type": "string",
+                    "maximum": 300
+                  },
+                  "shipping_details": {
+                    "$ref": "#/components/schemas/ShippingDetailsItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/invoices/{invoice_id}": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Retrieve a specific invoice",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "description": "The ID of the invoice to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/invoices/{invoice_id}/pdf": {
+      "get": {
+        "tags": [
+          "Invoices"
+        ],
+        "summary": "Retrieve the pdf of an invoice",
+        "parameters": [
+          {
+            "name": "invoice_id",
+            "in": "path",
+            "description": "The ID of the invoice to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "template",
+            "in": "query",
+            "description": "The template the PDF will be generated at",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "a4",
+                "a4_landscape",
+                "80mm"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/credit-notes": {
+      "get": {
+        "tags": [
+          "Credit Notes"
+        ],
+        "summary": "Retrieve all issued credit notes",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "Search by id. Accepts multiple ids separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contact_id",
+            "description": "Search by contact ID",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contact_code",
+            "description": "Search by contact code",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "description": "Search from a specific date (including the date). Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "description": "Search to a specific date (including the date). Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Search exactly the specific date. Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "description": "Search by number. Accepts multiple invoice numbers separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "numbering_sequence",
+            "description": "Search by numbering sequence. Accepts the numbering sequence id.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Result per request. Max 2000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page number",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CreditNoteItem"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string"
+                        },
+                        "last": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "string"
+                        },
+                        "next": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "from": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "path": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "to": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Credit Notes"
+        ],
+        "summary": "Create a new credit note",
+        "responses": {
+          "201": {
+            "description": "Credit note created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditNoteItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "description": "The number of the invoice. If it's empty then the next sequential number will be used according to the invoices type and sequence.",
+                    "type": "integer"
+                  },
+                  "correlated_invoice": {
+                    "description": "The MARK of the correlated invoice. Required only if mydata_document_type is 5.1",
+                    "type": "string"
+                  },
+                  "numbering_sequence_id": {
+                    "description": "The numbering sequence id of the credit note",
+                    "type": "string"
+                  },
+                  "issue_date": {
+                    "description": "The issue date of the credit note",
+                    "type": "string",
+                    "format": "date",
+                    "example": "2021-07-21"
+                  },
+                  "document_type": {
+                    "description": "The type of the credit note.",
+                    "type": "string",
+                    "enum": [
+                      "pistotiko - Credit note for invoices",
+                      "pistlianiki - Credit note for receipts"
+                    ]
+                  },
+                  "language": {
+                    "description": "The language of the credit note",
+                    "type": "string",
+                    "enum": [
+                      "GR",
+                      "EN"
+                    ]
+                  },
+                  "business_area_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "rbj18kl4igi39"
+                    },
+                    "format": "uuid"
+                  },
+                  "mydata_document_type": {
+                    "description": "The document type for MyData as seen at table 8.1 in AADE manual",
+                    "type": "string",
+                    "enum": [
+                      5.1,
+                      5.2,
+                      11.4
+                    ]
+                  },
+                  "payment_method_id": {
+                    "description": "The id of the payment method to associate with the credit note",
+                    "type": "string"
+                  },
+                  "description": {
+                    "description": "A description about the document. If left blank the description of the first item will be chosen.",
+                    "type": "string",
+                    "maximum": 200
+                  },
+                  "contact_id": {
+                    "description": "The id of the contact (client) that the credit note will be issued",
+                    "type": "string"
+                  },
+                  "items": {
+                    "description": "List of items / products / services",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "description": "The description of the item",
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "description": "The quantity of the time",
+                          "type": "number"
+                        },
+                        "unit_net_value": {
+                          "description": "The item unit price without VAT",
+                          "type": "number"
+                        },
+                        "tax_id": {
+                          "description": "The ID of the tax to be applied",
+                          "type": "string"
+                        },
+                        "discount_type": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "7n2jxo53wppsd"
+                          },
+                          "enum": [
+                            "percent",
+                            "amount"
+                          ]
+                        },
+                        "discount_value": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "4egx48uo6g1wg"
+                          }
+                        },
+                        "net_amount_pre_discount": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "1qatoh595fqgt"
+                          }
+                        },
+                        "vat_amount": {
+                          "description": "The amount of the VAT",
+                          "type": "number"
+                        },
+                        "net_amount": {
+                          "description": "The items' price without VAT",
+                          "type": "number"
+                        },
+                        "mydata_classification_category": {
+                          "description": "The mydata category from table 8.8 from AADE manual",
+                          "type": "string"
+                        },
+                        "mydata_classification_type": {
+                          "description": "The mydata type from table 8.9 from AADE manual",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "comments": {
+                    "description": "Comments to be printed on the credit note",
+                    "type": "string"
+                  },
+                  "infobox": {
+                    "description": "Brief information to be printed on the credit note",
+                    "type": "string",
+                    "maximum": 300
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/credit-notes/{credit_note_id}": {
+      "get": {
+        "tags": [
+          "Credit Notes"
+        ],
+        "summary": "Retrieve a specific credit note",
+        "parameters": [
+          {
+            "name": "credit_note_id",
+            "in": "path",
+            "description": "The ID of the credit note to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditNoteItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/credit-note/{credit_note_id}/pdf": {
+      "get": {
+        "tags": [
+          "Credit Notes"
+        ],
+        "summary": "Retrieve the pdf of an credit note",
+        "parameters": [
+          {
+            "name": "credit_note_id",
+            "in": "path",
+            "description": "The ID of the credit note to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "template",
+            "in": "query",
+            "description": "The template the PDF will be generated at",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "a4",
+                "a4_landscape",
+                "80mm"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/notices": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Retrieve all issued notices",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "Search by id. Accepts multiple ids separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contact_id",
+            "description": "Search by contact id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "contact_code",
+            "description": "Search by contact code",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_from",
+            "description": "Search from a specific date (including the date). Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date_to",
+            "description": "Search to a specific date (including the date). Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "description": "Search exactly the specific date. Format is YYYY-MM-DD.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "description": "Search by number. Accepts multiple invoice numbers separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "numbering_sequence",
+            "description": "Search by numbering sequence. Accepts the numbering sequence id.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Result per request. Max 2000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page number",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NoticeItem"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string"
+                        },
+                        "last": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "string"
+                        },
+                        "next": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "from": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "path": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "to": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Create a new notice",
+        "responses": {
+          "201": {
+            "description": "Notice created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "description": "The number of the notice. If it's empty then the next sequential number will be used.",
+                    "type": "integer"
+                  },
+                  "numbering_sequence_id": {
+                    "description": "The numbering sequence id of the notice.",
+                    "type": "string"
+                  },
+                  "issue_date": {
+                    "description": "The issue date of the notice",
+                    "type": "string",
+                    "format": "date",
+                    "example": "2021-07-21"
+                  },
+                  "expire_date": {
+                    "description": "The expire date of the notice. Not required. If its empty it will be calculated 10 days after the issue date",
+                    "type": "string",
+                    "format": "date",
+                    "example": "2021-07-25"
+                  },
+                  "business_area_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "n5v9yznab3heq"
+                    },
+                    "format": "uuid"
+                  },
+                  "language": {
+                    "description": "The language of the invoice",
+                    "type": "string",
+                    "enum": [
+                      "el",
+                      "en"
+                    ]
+                  },
+                  "description": {
+                    "description": "A description about the document. If left blank the description of the first item will be chosen.",
+                    "type": "string",
+                    "maximum": 200
+                  },
+                  "contact_id": {
+                    "description": "The id of the contact (client) that the invoice will be issued",
+                    "type": "string"
+                  },
+                  "logo_id": {
+                    "description": "The id of the logo to be used. If it's empty the default logo will be used.",
+                    "type": "string"
+                  },
+                  "items": {
+                    "description": "List of items / products / services",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "description": "The description of the item",
+                          "type": "string"
+                        },
+                        "quantity": {
+                          "description": "The quantity of the time",
+                          "type": "number"
+                        },
+                        "unit_net_value": {
+                          "description": "The item unit price without VAT",
+                          "type": "number"
+                        },
+                        "tax_id": {
+                          "description": "The ID of the tax to be applied",
+                          "type": "string"
+                        },
+                        "discount_type": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "eefrsa4y9zygm"
+                          },
+                          "enum": [
+                            "percent",
+                            "amount"
+                          ]
+                        },
+                        "discount_value": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "b1vuzk6x6clr4"
+                          }
+                        },
+                        "net_amount_pre_discount": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "qwhz1qj1nsqtc"
+                          }
+                        },
+                        "net_amount": {
+                          "description": "The items' price without VAT",
+                          "type": "number"
+                        },
+                        "vat_amount": {
+                          "description": "The amount of the VAT",
+                          "type": "number"
+                        },
+                        "mydata_classification_category": {
+                          "description": "The mydata category from table 8.8 from AADE manual. Optional",
+                          "type": "string"
+                        },
+                        "mydata_classification_type": {
+                          "description": "The mydata type from table 8.9 from AADE manual. Optional",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notices/{notice_id}": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Retrieve a specific notice",
+        "parameters": [
+          {
+            "name": "notice_id",
+            "in": "path",
+            "description": "The ID of the notice to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoticeItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/notices/{notice_id}/pdf": {
+      "get": {
+        "tags": [
+          "Notices"
+        ],
+        "summary": "Retrieve the pdf of a notice",
+        "parameters": [
+          {
+            "name": "notice_id",
+            "in": "path",
+            "description": "The ID of the notice to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "template",
+            "in": "query",
+            "description": "The template the PDF will be generated at",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "a4",
+                "a4_landscape",
+                "80mm"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/taxes": {
+      "get": {
+        "tags": [
+          "Taxes"
+        ],
+        "summary": "Retrieve all the taxes",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page number",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TaxItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Taxes"
+        ],
+        "summary": "Create a new tax",
+        "responses": {
+          "201": {
+            "description": "Tax created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "mydata_vat_code"
+                ],
+                "properties": {
+                  "title": {
+                    "description": "A title for the tax. Required if mydata_vat_code is 999.",
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "mydata_vat_code": {
+                    "description": "The vat category as list at table 8.2 of AADE Manual. If the tax its not Greek then the mydata_vat_code should be 999.",
+                    "type": "integer",
+                    "required": true
+                  },
+                  "mydata_vat_exemption_category": {
+                    "description": "Required only if mydata_vat_code is 7. Values from table 8.3 of AADE manual",
+                    "type": "boolean",
+                    "nullable": true
+                  },
+                  "rate": {
+                    "description": "The rate of the tax. Required if mydata_vat_code is 999 else not.",
+                    "type": "number",
+                    "nullable": true,
+                    "example": "24.00"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/taxes/{tax_id}": {
+      "get": {
+        "tags": [
+          "Taxes"
+        ],
+        "summary": "Retrieve a specific tax",
+        "parameters": [
+          {
+            "name": "tax_id",
+            "in": "path",
+            "description": "The ID of the tax to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/numbering-sequences": {
+      "get": {
+        "tags": [
+          "Numbering Sequences"
+        ],
+        "summary": "Retrieve all the numbering sequences",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NumberingSequenceItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Numbering Sequences"
+        ],
+        "summary": "Create a new numbering sequence",
+        "responses": {
+          "201": {
+            "description": "Tax created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NumberingSequenceItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "document_type",
+                  "is_draft"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "The name (prefix)",
+                    "required": true,
+                    "type": "string"
+                  },
+                  "document_type": {
+                    "description": "The document type the numbering sequence associate's with.",
+                    "type": "string",
+                    "required": true
+                  },
+                  "title": {
+                    "description": "This can be used to change the default title of some document types",
+                    "type": "string"
+                  },
+                  "is_draft": {
+                    "description": "If the is_draft is set to true, then the invoice is considered draft and will not be send to MyData.",
+                    "type": "boolean",
+                    "required": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/numbering-sequences/{numbering_sequence_id}": {
+      "get": {
+        "tags": [
+          "Numbering Sequences"
+        ],
+        "summary": "Retrieve a specific numbering sequence",
+        "parameters": [
+          {
+            "name": "numbering_sequence_id",
+            "in": "path",
+            "description": "The ID of the numbering sequence to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NumberingSequenceItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/payment-methods": {
+      "get": {
+        "tags": [
+          "Payment Methods"
+        ],
+        "summary": "Retrieve all the payment methods.",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PaymentMethodItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Payment Methods"
+        ],
+        "summary": "Create a new payment method",
+        "responses": {
+          "201": {
+            "description": "Payment method created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentMethodItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title_gr",
+                  "title_en",
+                  "mydata_code",
+                  "status"
+                ],
+                "properties": {
+                  "title_gr": {
+                    "description": "The Greek title",
+                    "required": true,
+                    "type": "string"
+                  },
+                  "title_en": {
+                    "description": "The English title",
+                    "required": true,
+                    "type": "string"
+                  },
+                  "mydata_code": {
+                    "description": "The mydata code as listed at table 8.12 at AADE Manual",
+                    "type": "integer",
+                    "required": true
+                  },
+                  "status": {
+                    "description": "If the numbering sequence is active or not",
+                    "type": "boolean",
+                    "required": true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payment-methods/{payment_method_id}": {
+      "get": {
+        "tags": [
+          "Payment Methods"
+        ],
+        "summary": "Retrieve a specific payment method",
+        "parameters": [
+          {
+            "name": "payment_method_id",
+            "in": "path",
+            "description": "The ID of the payment method to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentMethodItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/products": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "List of all products",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "id",
+            "description": "Search by id. Accepts multiple ids separated by comma (,)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "description": "Search by name. The product will contain the search term",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "description": "Search by product code. Accepts multiple code seperated by comma (,).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "category_id",
+            "description": "Search by category. Accepts the category id.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Result per request. Max 2000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page number",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductItem"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string"
+                        },
+                        "last": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "string"
+                        },
+                        "next": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "from": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "path": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "to": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Create a new product",
+        "responses": {
+          "201": {
+            "description": "Product created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "code",
+                  "warehouses",
+                  "sale_net_amount",
+                  "sale_tax_id",
+                  "status"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "The name for the product.",
+                    "type": "string"
+                  },
+                  "code": {
+                    "description": "The code of the product",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "The type of the product. 1 - product, 2 - service, 3 - merchandise",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "category_id": {
+                    "description": "The id of the category the product belongs to.",
+                    "type": "string"
+                  },
+                  "barcode": {
+                    "description": "The barcode of the product.",
+                    "type": "string"
+                  },
+                  "mpn_isbn": {
+                    "description": "The MPN (or ISBN if its a book)",
+                    "type": "string"
+                  },
+                  "part_number": {
+                    "description": "The part number.",
+                    "type": "string"
+                  },
+                  "manufacturer_name": {
+                    "description": "The name of the manufacturer.",
+                    "type": "string"
+                  },
+                  "supplier_id": {
+                    "description": "The id of the contact that supplies the product.",
+                    "type": "string"
+                  },
+                  "supplier_code": {
+                    "description": "The supplier code.",
+                    "type": "string"
+                  },
+                  "warehouses": {
+                    "description": "Warehouse details the product belongs too.",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "description": "The id of the warehouse",
+                          "type": "string",
+                          "required": true
+                        },
+                        "quantity": {
+                          "description": "The quantity",
+                          "type": "number"
+                        },
+                        "position": {
+                          "description": "The position of the product in the warehouse.",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "sale_net_amount": {
+                    "description": "The sale net amount for the product",
+                    "type": "number"
+                  },
+                  "sale_tax_id": {
+                    "description": "The id of the tax (vat) that should be applied at the sale price of product",
+                    "type": "string"
+                  },
+                  "purchase_net_amount": {
+                    "description": "The purchase net amount for the product",
+                    "type": "string"
+                  },
+                  "purchase_tax_id": {
+                    "description": "The id of the tax (vat) that should be applied at the purchase price of product",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "description": "Extra information about the product",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "weight": {
+                          "type": "number"
+                        },
+                        "height": {
+                          "type": "number"
+                        },
+                        "width": {
+                          "type": "number"
+                        },
+                        "length": {
+                          "type": "number"
+                        },
+                        "link": {
+                          "type": "string"
+                        },
+                        "warranty": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "notes": {
+                    "description": "Notes about the product",
+                    "type": "string"
+                  },
+                  "mydata_income_category": {
+                    "description": "Mydata income Category for wholesale",
+                    "type": "string"
+                  },
+                  "mydata_income_type": {
+                    "description": "Mydata income type for wholesale",
+                    "type": "string"
+                  },
+                  "mydata_income_retail_category": {
+                    "description": "Mydata income Category for retail",
+                    "type": "string"
+                  },
+                  "mydata_income_retail_type": {
+                    "description": "Mydata income type for retail",
+                    "type": "string"
+                  },
+                  "status": {
+                    "description": "Status of the product, true is enable, false is disable",
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products/{product_id}": {
+      "get": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Retrieve a specific product",
+        "parameters": [
+          {
+            "name": "product_id",
+            "in": "path",
+            "description": "The ID of the product to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Products"
+        ],
+        "summary": "Update a product. Values that are not provider will keep the old value",
+        "responses": {
+          "201": {
+            "description": "Product updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "description": "The name for the product.",
+                    "type": "string"
+                  },
+                  "type": {
+                    "description": "The type of the product. 1 - product, 2 - service, 3 - merchandise",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 3
+                  },
+                  "category_id": {
+                    "description": "The id of the category the product belongs to.",
+                    "type": "string"
+                  },
+                  "barcode": {
+                    "description": "The barcode of the product.",
+                    "type": "string"
+                  },
+                  "mpn_isbn": {
+                    "description": "The MPN (or ISBN if its a book)",
+                    "type": "string"
+                  },
+                  "part_number": {
+                    "description": "The part number.",
+                    "type": "string"
+                  },
+                  "manufacturer_name": {
+                    "description": "The name of the manufacturer.",
+                    "type": "string"
+                  },
+                  "supplier_id": {
+                    "description": "The id of the contact that supplies the product.",
+                    "type": "string"
+                  },
+                  "supplier_code": {
+                    "description": "The supplier code.",
+                    "type": "string"
+                  },
+                  "warehouses": {
+                    "description": "Warehouse details the product belongs too.",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "description": "The id of the warehouse",
+                          "type": "string",
+                          "required": true
+                        },
+                        "quantity": {
+                          "description": "The quantity",
+                          "type": "number"
+                        },
+                        "position": {
+                          "description": "The position of the product in the warehouse.",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "sale_net_amount": {
+                    "description": "The sale net amount for the product",
+                    "type": "number"
+                  },
+                  "sale_tax_id": {
+                    "description": "The id of the tax (vat) that should be applied at the sale price of product",
+                    "type": "string"
+                  },
+                  "purchase_net_amount": {
+                    "description": "The purchase net amount for the product",
+                    "type": "string"
+                  },
+                  "purchase_tax_id": {
+                    "description": "The id of the tax (vat) that should be applied at the purchase price of product",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "description": "Extra information about the product",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "weight": {
+                          "type": "number"
+                        },
+                        "height": {
+                          "type": "number"
+                        },
+                        "width": {
+                          "type": "number"
+                        },
+                        "length": {
+                          "type": "number"
+                        },
+                        "link": {
+                          "type": "string"
+                        },
+                        "warranty": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "notes": {
+                    "description": "Notes about the product",
+                    "type": "string"
+                  },
+                  "mydata_income_category": {
+                    "description": "Mydata income Category for wholesale",
+                    "type": "string"
+                  },
+                  "mydata_income_type": {
+                    "description": "Mydata income type for wholesale",
+                    "type": "string"
+                  },
+                  "mydata_income_retail_category": {
+                    "description": "Mydata income Category for retail",
+                    "type": "string"
+                  },
+                  "mydata_income_retail_type": {
+                    "description": "Mydata income type for retail",
+                    "type": "string"
+                  },
+                  "status": {
+                    "description": "Status of the product, true is enable, false is disable",
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products-categories": {
+      "get": {
+        "tags": [
+          "Product Categories"
+        ],
+        "summary": "Retrieve all the product categories",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductCategoryItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Product Categories"
+        ],
+        "summary": "Create a new product category",
+        "responses": {
+          "201": {
+            "description": "Category created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "The name of the category",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/products-categories/{product_category_id}": {
+      "get": {
+        "tags": [
+          "Product Categories"
+        ],
+        "summary": "Retrieve a specific product category",
+        "parameters": [
+          {
+            "name": "product_category_id",
+            "in": "path",
+            "description": "The ID of the product category to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoryItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/warehouses": {
+      "get": {
+        "tags": [
+          "Warehouses"
+        ],
+        "summary": "List of all the warehouses",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/WarehouseItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Warehouses"
+        ],
+        "summary": "Create a new Warehouse",
+        "responses": {
+          "201": {
+            "description": "Warehouse created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WarehouseItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "The name of the Warehouse",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/variations": {
+      "get": {
+        "tags": [
+          "Variations"
+        ],
+        "summary": "List all variations",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/VariationItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Variations"
+        ],
+        "summary": "Create a new variation",
+        "responses": {
+          "201": {
+            "description": "Variation created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariationItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "The name of the variation in Greek",
+                    "type": "string"
+                  },
+                  "name_en": {
+                    "description": "The name of the variation in English",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/variations/{variation_id}": {
+      "get": {
+        "tags": [
+          "Variations"
+        ],
+        "summary": "List a specific variation",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariationItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/variations/{variation_id}/values": {
+      "get": {
+        "tags": [
+          "Variations"
+        ],
+        "summary": "List of all the values for a variation",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariationItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Variations"
+        ],
+        "summary": "Create a new value for variation",
+        "responses": {
+          "201": {
+            "description": "Value created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariationValueItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "description": "The name of the value",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/variations/{variation_id}/values/{value_id}": {
+      "get": {
+        "tags": [
+          "Variations"
+        ],
+        "summary": "List a specific value of a variation",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariationValueItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/oxygen-payments": {
+      "get": {
+        "tags": [
+          "Oxygen Payments"
+        ],
+        "summary": "List all oxygen payments",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "per_page",
+            "description": "Result per request. Max 2000.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2000
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "The page number",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/OxygenPaymentItem"
+                      }
+                    },
+                    "links": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string"
+                        },
+                        "last": {
+                          "type": "string"
+                        },
+                        "previous": {
+                          "type": "string"
+                        },
+                        "next": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "current_page": {
+                          "type": "integer"
+                        },
+                        "from": {
+                          "type": "integer"
+                        },
+                        "last_page": {
+                          "type": "integer"
+                        },
+                        "path": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "per_page": {
+                          "type": "integer"
+                        },
+                        "to": {
+                          "type": "integer"
+                        },
+                        "total": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Oxygen Payments"
+        ],
+        "summary": "Create a new oxygen payment",
+        "responses": {
+          "201": {
+            "description": "Payment created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OxygenPaymentItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "description": "Description of the payment",
+                    "type": "string"
+                  },
+                  "business_area_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "iq8degpbxpzlq"
+                    },
+                    "format": "uuid"
+                  },
+                  "comments": {
+                    "description": "Comments for the payment",
+                    "type": "string"
+                  },
+                  "amount": {
+                    "description": "The amount of the payment, 2 digit precision.",
+                    "type": "number"
+                  },
+                  "expire_date": {
+                    "description": "Expiry date of the payment",
+                    "type": "string",
+                    "format": "date",
+                    "example": "2021-07-21"
+                  },
+                  "contact_id": {
+                    "description": "The id of the contact",
+                    "type": "string"
+                  },
+                  "logo_id": {
+                    "description": "The id of the logo to be used. If it's empty the default logo will be used.",
+                    "type": "string"
+                  },
+                  "language": {
+                    "description": "The language of the oxygen payment.",
+                    "enum": [
+                      "el",
+                      "en"
+                    ]
+                  }
+                },
+                "required": [
+                  "description",
+                  "amount",
+                  "expire_date",
+                  "contact_id",
+                  "language"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/oxygen-payments/{oxygen_payment_id}": {
+      "get": {
+        "tags": [
+          "Oxygen Payments"
+        ],
+        "summary": "Retrieve a specific oxygen payment",
+        "parameters": [
+          {
+            "name": "oxygen_payment_id",
+            "in": "path",
+            "description": "The ID of the oxygen payment to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OxygenPaymentItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/ForbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/logos": {
+      "get": {
+        "tags": [
+          "Logos"
+        ],
+        "summary": "List all logos",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LogoItem"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/logos/{logo_id}": {
+      "get": {
+        "tags": [
+          "Logos"
+        ],
+        "summary": "Retrieve a specific logo",
+        "parameters": [
+          {
+            "name": "logo_id",
+            "in": "path",
+            "description": "The ID of the contact to be retrieved",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogoItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          }
+        }
+      }
+    },
+    "/vat-check": {
+      "get": {
+        "tags": [
+          "VAT Check"
+        ],
+        "summary": "Retrieves details about about a Greek Business VAT.",
+        "parameters": [
+          {
+            "name": "vat",
+            "in": "path",
+            "description": "A valid Greek Business VAT",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxisNetItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/vies": {
+      "get": {
+        "tags": [
+          "VAT Check"
+        ],
+        "summary": "Retrieves details about about a EU Business VAT from VIES.",
+        "parameters": [
+          {
+            "name": "vat",
+            "in": "path",
+            "description": "A valid EU Business VAT",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "country_code",
+            "in": "path",
+            "description": "A 2 digit EU country",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxisNetItem"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        }
+      }
+    },
+    "/delivery-notes": {
+      "get": {
+        "summary": "Get all delivery notes",
+        "tags": [
+          "Delivery Notes"
+        ],
+        "responses": {},
+        "operationId": "get-delivery-notes"
+      },
+      "post": {
+        "summary": "Create a new delivery note",
+        "operationId": "post-delivery-notes",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "description": "Create a delivery note",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "x-stoplight": {
+                      "id": "jwbtfb8xmsmlj"
+                    }
+                  },
+                  "numbering_sequence_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "s252m6690v4mb"
+                    },
+                    "format": "uuid"
+                  },
+                  "mydata_document_type": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "g3vikygf5pnkb"
+                    },
+                    "enum": [
+                      "9.3"
+                    ]
+                  },
+                  "issue_date": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "eyho1yoiq4zf8"
+                    },
+                    "format": "date"
+                  },
+                  "description": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "8wlokcmml3svq"
+                    }
+                  },
+                  "contact_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "xgorjxegko1cm"
+                    },
+                    "format": "uuid"
+                  },
+                  "logo_id": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "ee7xl9gtbnx9k"
+                    },
+                    "format": "uuid"
+                  },
+                  "language": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "c0v010xdu2mpa"
+                    },
+                    "enum": [
+                      "el",
+                      "en"
+                    ]
+                  },
+                  "items": {
+                    "type": "array",
+                    "x-stoplight": {
+                      "id": "v95fmvrtbnfk5"
+                    },
+                    "items": {
+                      "x-stoplight": {
+                        "id": "daz8t723hw23q"
+                      },
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "oj4hr43ei69a4"
+                          }
+                        },
+                        "warehouse_id": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "loih62fa6mrgt"
+                          },
+                          "format": "uuid"
+                        },
+                        "description": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "fdjs01obvlrsx"
+                          }
+                        },
+                        "quantity": {
+                          "type": "number",
+                          "x-stoplight": {
+                            "id": "mfd2glc2rmeu7"
+                          }
+                        },
+                        "measurement_unit_id": {
+                          "type": "string",
+                          "x-stoplight": {
+                            "id": "wnrbs0uiil0b2"
+                          },
+                          "format": "uuid"
+                        }
+                      }
+                    }
+                  },
+                  "shipping_details": {
+                    "$ref": "#/components/schemas/ShippingDetailsItem"
+                  },
+                  "infobox": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "krrexcgab3fz4"
+                    }
+                  },
+                  "comments": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "q9ea8amporrlz"
+                    }
+                  }
+                },
+                "required": [
+                  "mydata_document_type",
+                  "issue_date",
+                  "contact_id",
+                  "language",
+                  "shipping_details"
+                ]
+              }
+            }
+          }
+        },
+        "tags": [
+          "Delivery Notes"
+        ]
+      }
+    },
+    "/measurement-units": {
+      "get": {
+        "summary": "Retrieve all measurement units",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementUnit"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "get-measurement-units",
+        "tags": [
+          "Measurement Units"
+        ]
+      },
+      "post": {
+        "summary": "Create a measurement unit",
+        "operationId": "post-measurement-units",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "": {
+                      "$ref": "#/components/schemas/MeasurementUnit"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Measurement Units"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "": {
+                    "$ref": "#/components/schemas/MeasurementUnitRequest"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/business-areas": {
+      "get": {
+        "summary": "Your GET endpoint",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "operationId": "get-business-area",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BusinessAreaItem"
+              }
+            }
+          }
+        },
+        "tags": [
+          "Business Areas"
+        ]
+      },
+      "post": {
+        "summary": "",
+        "operationId": "post-business-area",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "jkd5f3k3tkn0o"
+                    },
+                    "maxLength": 20
+                  },
+                  "name": {
+                    "type": "string",
+                    "x-stoplight": {
+                      "id": "i2xzc5vgysitk"
+                    },
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "code",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "tags": [
+          "Business Areas"
+        ]
+      },
+      "parameters": []
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Every endpoint is protected with a bearer token.\nDuring every request the token must be passed with the Authorization header and have the value  Bearer <token>.\nIn case of error the api returns 401 - Unauthorized.\nAlso, the \"Accept\" header should be passed with value \"application/json\".\n"
+      }
+    },
+    "schemas": {
+      "ContactItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the contact",
+            "type": "string"
+          },
+          "code": {
+            "description": "Contact code. If empty a random will be created",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "description": "The type of the contact. 1 - Private, 2 - Company",
+            "type": "integer"
+          },
+          "is_client": {
+            "description": "If the contact is a client or not. true or 1 - is a client, false - it is not a client",
+            "type": "boolean"
+          },
+          "is_supplier": {
+            "description": "If the contact is a supplier or not. true - is a supplier, false - it is not a supplier",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Name of the contact. Required only if type is 1.",
+            "type": "string"
+          },
+          "surname": {
+            "description": "Surname of the contact. Required only if type is 1.",
+            "type": "string"
+          },
+          "nickname": {
+            "description": "Nickname of the contact.",
+            "type": "string",
+            "maximum": 100
+          },
+          "company_name": {
+            "description": "The name of the contact. Required only if type is 2",
+            "type": "string"
+          },
+          "profession": {
+            "description": "The profession of the contact. Required only if type is 2",
+            "type": "string"
+          },
+          "vat_number": {
+            "description": "The VAT of the contact. If the contact is a non Greek company, the country's 2 letter code should be used as prefix. Required only if type is 2",
+            "type": "string"
+          },
+          "tax_office": {
+            "description": "The tax officer of the contact. Required only if type is 2 and company is from Greece.",
+            "type": "string"
+          },
+          "telephone": {
+            "description": "The telephone of the contact",
+            "type": "string",
+            "nullable": true
+          },
+          "mobile": {
+            "description": "The mobile of the contact",
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "description": "The email of the contact",
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "description": "The street of the contact",
+            "type": "string"
+          },
+          "number": {
+            "description": "The number of the contact",
+            "type": "string"
+          },
+          "city": {
+            "description": "The city of the contact",
+            "type": "string"
+          },
+          "zip_code": {
+            "description": "The zip code of the contact",
+            "type": "string"
+          },
+          "country": {
+            "description": "The country of the contact (2letter)",
+            "type": "string"
+          },
+          "is_active": {
+            "description": "Returns if the contact is active or not",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-01-06 18:53:00"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-03-05 22:53:00"
+          }
+        },
+        "x-stoplight": {
+          "id": "khz47wd79w3ow"
+        }
+      },
+      "InvoiceItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the invoice",
+            "type": "string"
+          },
+          "sequence": {
+            "description": "The numbering sequence",
+            "type": "string"
+          },
+          "number": {
+            "description": "The number of the invoice",
+            "type": "integer"
+          },
+          "issue_date": {
+            "description": "The issue date of the invoice",
+            "type": "string",
+            "format": "date",
+            "example": "2021-07-21"
+          },
+          "document_type": {
+            "description": "The type of the invoice.",
+            "type": "string",
+            "enum": [
+              "s (Invoice for Services)",
+              "p (Invoice for product sales and/or services)",
+              "rs (Receipt (issued to private customers) for services)",
+              "rp (Receipt (issued to private customers) for products and/or services)"
+            ]
+          },
+          "description": {
+            "description": "A small description of the document",
+            "type": "string",
+            "maximum": 200
+          },
+          "contact_id": {
+            "description": "The ID of the contact (client)",
+            "type": "string"
+          },
+          "contact_profession": {
+            "description": "The profession of the contact (client)",
+            "type": "string"
+          },
+          "contact_vat": {
+            "description": "The VAT of the contact (client)",
+            "type": "string"
+          },
+          "contact_tax_office": {
+            "description": "The tax office of the contact (client)",
+            "type": "string"
+          },
+          "contact_email": {
+            "description": "The email of the contact (client)",
+            "type": "string"
+          },
+          "contact_telephone": {
+            "description": "The telephone of the contact (client)",
+            "type": "string"
+          },
+          "contact_address": {
+            "description": "The address of the contact (client)",
+            "type": "string"
+          },
+          "contact_country": {
+            "description": "The country of the contact (client)",
+            "type": "string"
+          },
+          "contact_city": {
+            "description": "The city of the contact (client)",
+            "type": "string"
+          },
+          "contact_zip_code": {
+            "description": "The zip code of the contact (client)",
+            "type": "string"
+          },
+          "language": {
+            "description": "The language of the invoice",
+            "type": "string",
+            "enum": [
+              "GR",
+              "EN"
+            ]
+          },
+          "net_amount": {
+            "description": "The total net amount of the invoice",
+            "type": "number"
+          },
+          "vat_amount": {
+            "description": "The total VAT amount of the invoice",
+            "type": "number"
+          },
+          "total_amount": {
+            "description": "The total amount of the invoice",
+            "type": "number"
+          },
+          "amount_to_pay": {
+            "description": "Amount to be paid",
+            "type": "number"
+          },
+          "amount_paid": {
+            "description": "Amount already paid",
+            "type": "number"
+          },
+          "amount_pending": {
+            "description": "Amount pending to be paid",
+            "type": "number"
+          },
+          "items": {
+            "description": "List of items / products / services",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "The id of the item",
+                  "type": "string"
+                },
+                "code": {
+                  "description": "The code of the item",
+                  "type": "string"
+                },
+                "warehouse_id": {
+                  "description": "The id of the warehouse the item belongs",
+                  "type": "string"
+                },
+                "warehouse_name": {
+                  "description": "The name of the warehouse the item belongs",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "The description of the item",
+                  "type": "string"
+                },
+                "quantity": {
+                  "description": "The quantity of the time",
+                  "type": "number"
+                },
+                "unit_net_value": {
+                  "description": "The item unit price without VAT",
+                  "type": "number"
+                },
+                "vat_category": {
+                  "description": "The vat category as list at table 8.2 at AADE Manual",
+                  "type": "integer"
+                },
+                "item_net_amount": {
+                  "description": "The item net amount (unit_net_value χ quantity)",
+                  "type": "number"
+                },
+                "vat_amount": {
+                  "description": "The amount of the VAT",
+                  "type": "number"
+                },
+                "vat_exemption_category": {
+                  "description": "If vat_category is 7 then the value is the from table 8.3 from AADE manual else its 0.",
+                  "type": "integer"
+                },
+                "item_total_amount": {
+                  "description": "The item total mount (VAT included)",
+                  "type": "number"
+                },
+                "mydata_classification_category": {
+                  "description": "The mydata category from table 8.8 from AADE manual",
+                  "type": "string"
+                },
+                "mydata_classification_type": {
+                  "description": "The mydata type from table 8.9 from AADE manual",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "notice": {
+            "$ref": "#/components/schemas/NoticeItem"
+          },
+          "iview_code": {
+            "description": "The code for the invoice to be searched  at iview.gr",
+            "type": "string"
+          },
+          "iview_url": {
+            "description": "The URL of the invoice at iview.gr",
+            "type": "string",
+            "format": "uri"
+          },
+          "mydata_document_type": {
+            "description": "The document type for MyData as seen at table 8.1 in AADE manual",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "x-stoplight": {
+          "id": "lvox7tl1xdvp4"
+        }
+      },
+      "NoticeItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the notice",
+            "type": "string"
+          },
+          "sequence": {
+            "description": "The numbering sequence",
+            "type": "string"
+          },
+          "number": {
+            "description": "The number of the notice",
+            "type": "integer"
+          },
+          "issue_date": {
+            "description": "The issue date of the notice",
+            "type": "string",
+            "format": "date",
+            "example": "2021-07-21"
+          },
+          "expire_date": {
+            "description": "The expire date of the notice",
+            "type": "string",
+            "format": "date",
+            "example": "2021-07-21"
+          },
+          "description": {
+            "description": "A small description of the document",
+            "type": "string",
+            "maximum": 200
+          },
+          "contact_id": {
+            "description": "The ID of the contact (client)",
+            "type": "string"
+          },
+          "contact_profession": {
+            "description": "The profession of the contact (client)",
+            "type": "string"
+          },
+          "contact_vat": {
+            "description": "The VAT of the contact (client)",
+            "type": "string"
+          },
+          "contact_tax_office": {
+            "description": "The tax office of the contact (client)",
+            "type": "string"
+          },
+          "contact_email": {
+            "description": "The email of the contact (client)",
+            "type": "string"
+          },
+          "contact_telephone": {
+            "description": "The telephone of the contact (client)",
+            "type": "string"
+          },
+          "contact_address": {
+            "description": "The address of the contact (client)",
+            "type": "string"
+          },
+          "contact_country": {
+            "description": "The country of the contact (client)",
+            "type": "string"
+          },
+          "contact_city": {
+            "description": "The city of the contact (client)",
+            "type": "string"
+          },
+          "contact_zip_code": {
+            "description": "The zip code of the contact (client)",
+            "type": "string"
+          },
+          "language": {
+            "description": "The language of the invoice",
+            "type": "string",
+            "enum": [
+              "GR",
+              "EN"
+            ]
+          },
+          "net_amount": {
+            "description": "The total net amount of the invoice",
+            "type": "number"
+          },
+          "vat_amount": {
+            "description": "The total VAT amount of the invoice",
+            "type": "number"
+          },
+          "total_amount": {
+            "description": "The total amount of the invoice",
+            "type": "number"
+          },
+          "items": {
+            "description": "List of items / products / services",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "description": "The description of the item",
+                  "type": "string"
+                },
+                "quantity": {
+                  "description": "The quantity of the time",
+                  "type": "number"
+                },
+                "unit_net_value": {
+                  "description": "The item unit price without VAT",
+                  "type": "number"
+                },
+                "vat_category": {
+                  "description": "The vat category as list at table 8.2 at AADE Manual",
+                  "type": "integer"
+                },
+                "vat_amount": {
+                  "description": "The amount of the VAT",
+                  "type": "number"
+                },
+                "vat_exemption_category": {
+                  "description": "If vat_category is 7 then the value is the from table 8.3 from AADE manual else its 0.",
+                  "type": "integer"
+                },
+                "net_amount": {
+                  "description": "The items' price without VAT",
+                  "type": "number"
+                },
+                "mydata_classification_category": {
+                  "description": "The mydata category from table 8.8 from AADE manual",
+                  "type": "string"
+                },
+                "mydata_classification_type": {
+                  "description": "The mydata type from table 8.9 from AADE manual",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "iview_code": {
+            "description": "The code for the invoice be be searched  at iview.gr",
+            "type": "string"
+          },
+          "iview_url": {
+            "description": "The URL of the invoice at iview.gr",
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "x-stoplight": {
+          "id": "7g0htwfj3oi5a"
+        }
+      },
+      "CreditNoteItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the credit note",
+            "type": "string"
+          },
+          "number": {
+            "description": "The number of the credit note",
+            "type": "integer"
+          },
+          "issue_date": {
+            "description": "The issue date of the credit note",
+            "type": "string",
+            "format": "date",
+            "example": "2021-07-21"
+          },
+          "mydata_document_type": {
+            "description": "The document type for MyData as seen at table 8.1 in AADE manual",
+            "type": "string",
+            "enum": [
+              5.1,
+              5.2,
+              11.4
+            ]
+          },
+          "numbering_sequence_id": {
+            "description": "The ID of the numbering sequence",
+            "type": "string"
+          },
+          "numbering_sequence": {
+            "description": "The description of the numbering sequence",
+            "type": "string"
+          },
+          "document_type": {
+            "description": "The type of the credit note.",
+            "type": "string",
+            "enum": [
+              "pistotiko - Credit note for invoices",
+              "pistlianiki - Credit note for receipts"
+            ]
+          },
+          "payment_method_id": {
+            "description": "The ID of the payment method",
+            "type": "string"
+          },
+          "payment_method": {
+            "description": "The description of the payment method",
+            "type": "string"
+          },
+          "description": {
+            "description": "A small description of the document",
+            "type": "string",
+            "maximum": 200
+          },
+          "contact_id": {
+            "description": "The ID of the contact (client)",
+            "type": "string"
+          },
+          "contact_display_name": {
+            "description": "The display name of the contact (client)",
+            "type": "string"
+          },
+          "contact_profession": {
+            "description": "The profession of the contact (client)",
+            "type": "string"
+          },
+          "contact_vat": {
+            "description": "The VAT of the contact (client)",
+            "type": "string"
+          },
+          "contact_tax_office": {
+            "description": "The tax office of the contact (client)",
+            "type": "string"
+          },
+          "contact_email": {
+            "description": "The email of the contact (client)",
+            "type": "string"
+          },
+          "contact_telephone": {
+            "description": "The telephone of the contact (client)",
+            "type": "string"
+          },
+          "contact_address": {
+            "description": "The address of the contact (client)",
+            "type": "string"
+          },
+          "contact_country": {
+            "description": "The country of the contact (client)",
+            "type": "string"
+          },
+          "contact_city": {
+            "description": "The city of the contact (client)",
+            "type": "string"
+          },
+          "contact_zip_code": {
+            "description": "The zip code of the contact (client)",
+            "type": "string"
+          },
+          "language": {
+            "description": "The language of the credit note",
+            "type": "string",
+            "enum": [
+              "GR",
+              "EN"
+            ]
+          },
+          "net_amount": {
+            "description": "The total net amount of the credit note",
+            "type": "number"
+          },
+          "vat_amount": {
+            "description": "The total VAT amount of the credit note",
+            "type": "number"
+          },
+          "total_amount": {
+            "description": "The total amount of the credit note",
+            "type": "number"
+          },
+          "amount_to_pay": {
+            "description": "Amount to be paid",
+            "type": "number"
+          },
+          "items": {
+            "description": "List of items / products / services",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "description": "The description of the item",
+                  "type": "string"
+                },
+                "quantity": {
+                  "description": "The quantity of the time",
+                  "type": "number"
+                },
+                "unit_net_value": {
+                  "description": "The item unit price without VAT",
+                  "type": "number"
+                },
+                "vat_category": {
+                  "description": "The vat category as list at table 8.2 at AADE Manual",
+                  "type": "integer"
+                },
+                "vat_amount": {
+                  "description": "The amount of the VAT",
+                  "type": "number"
+                },
+                "vat_exemption_category": {
+                  "description": "If vat_category is 7 then the value is the from table 8.3 from AADE manual else its 0.",
+                  "type": "integer"
+                },
+                "net_amount": {
+                  "description": "The items' price without VAT",
+                  "type": "number"
+                },
+                "mydata_classification_category": {
+                  "description": "The mydata category from table 8.8 from AADE manual",
+                  "type": "string"
+                },
+                "mydata_classification_type": {
+                  "description": "The mydata type from table 8.9 from AADE manual",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "iview_code": {
+            "description": "The code for the credit note be be searched at iview.gr",
+            "type": "string"
+          },
+          "iview_url": {
+            "description": "The URL of the credit note at iview.gr",
+            "type": "string",
+            "format": "uri"
+          },
+          "comments": {
+            "description": "Comments of the credit note",
+            "type": "string"
+          },
+          "infobox": {
+            "description": "Brief information of the credit note",
+            "type": "string",
+            "maximum": 300
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "x-stoplight": {
+          "id": "srjzdfhitq34z"
+        }
+      },
+      "TaxItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the tax",
+            "type": "string"
+          },
+          "title": {
+            "description": "The title of the tax",
+            "type": "string"
+          },
+          "rate": {
+            "description": "The percent rate of the tax with 2 decimals",
+            "type": "number",
+            "example": 24
+          },
+          "is_default": {
+            "description": "If the tax is default or not. Currenlty not used for API purposes",
+            "type": "boolean"
+          },
+          "mydata_vat_code": {
+            "description": "The vat category as listed at table 8.2 at AADE Manual",
+            "type": "integer"
+          },
+          "mydata_vat_exemption_category": {
+            "description": "The vat exempiton category from from table 8.3 from AADE manual.",
+            "type": "integer"
+          },
+          "status": {
+            "description": "Status of the tax, active or not.",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-01-06 18:53:00"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-03-05 22:53:00"
+          }
+        },
+        "x-stoplight": {
+          "id": "xfrtxxe9aam1p"
+        }
+      },
+      "NumberingSequenceItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the numbering sequence",
+            "type": "string"
+          },
+          "document_type": {
+            "description": "The document type of the numbering sequence assosicates with",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name (prefix)",
+            "type": "string"
+          },
+          "title": {
+            "description": "The title of the of the numbering sequence. This can be used to change the default title of some document types.",
+            "type": "string"
+          },
+          "is_draft": {
+            "description": "If the numbering sequence is draft then it the created document will not be sent to MyData.",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "If the numbering sequence is active or not",
+            "type": "integer"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-01-06 18:53:00"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-03-05 22:53:00"
+          }
+        },
+        "x-stoplight": {
+          "id": "n9f4eddl3rptp"
+        }
+      },
+      "PaymentMethodItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the payment method",
+            "type": "string"
+          },
+          "title_gr": {
+            "description": "The Greek title of the payment method",
+            "type": "string"
+          },
+          "title_en": {
+            "description": "The English title of the payment method",
+            "type": "string"
+          },
+          "mydata_code": {
+            "description": "The mydata code as listed at table 8.12 at AADE Manual",
+            "type": "string"
+          },
+          "status": {
+            "description": "If the numbering sequence is active or not",
+            "type": "boolean"
+          }
+        },
+        "x-stoplight": {
+          "id": "ayl6hf2q7n0cb"
+        }
+      },
+      "ProductItem": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "The name for the product.",
+            "type": "string"
+          },
+          "code": {
+            "description": "The code of the product",
+            "type": "string"
+          },
+          "type": {
+            "description": "The type of the product. 1 - product, 2 - service, 3 - merchandise",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "group": {
+            "description": "The group the product belongs to. This is used when the product is created with variations or to group similar products."
+          },
+          "barcode": {
+            "description": "The barcode of the product.",
+            "type": "string"
+          },
+          "mpn_isbn": {
+            "description": "The MPN (or ISBN if its a book)",
+            "type": "string"
+          },
+          "part_number": {
+            "description": "The part number.",
+            "type": "string"
+          },
+          "variations": {
+            "description": "The variations the product has",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "variation_id": {
+                  "description": "The id of the variation",
+                  "type": "string"
+                },
+                "variation_name": {
+                  "description": "The name of the variation",
+                  "type": "string"
+                },
+                "variation_value_id": {
+                  "description": "The id of the value",
+                  "type": "string"
+                },
+                "variation_value_name": {
+                  "description": "The name of the value",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "quantity": {
+            "description": "The total quantity of the product",
+            "type": "number"
+          },
+          "warehouses": {
+            "description": "Warehouse details the product belongs too.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "description": "The id of the warehouse",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "The name of the warehouse",
+                  "type": "string"
+                },
+                "quantity": {
+                  "description": "The quantity",
+                  "type": "number"
+                },
+                "position": {
+                  "description": "The position of the product in the warehouse.",
+                  "type": "string"
+                },
+                "status": {
+                  "description": "Status of the product in the warehouse",
+                  "type": "boolean"
+                },
+                "created_at": {
+                  "description": "Create date of the product in the warehouse",
+                  "type": "string"
+                },
+                "updated_at": {
+                  "description": "Update date of the product in the warehouse",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "sale_net_amount": {
+            "description": "The sale net amount for the product",
+            "type": "number"
+          },
+          "sale_vat_ratio": {
+            "description": "The sale tax (vat) ratio",
+            "type": "string"
+          },
+          "sale_vat_amount": {
+            "description": "The sale tax (vat) amount",
+            "type": "string"
+          },
+          "sale_final_amount": {
+            "description": "The final price of the product",
+            "type": "string"
+          },
+          "purchase_net_amount": {
+            "description": "The purchase net amount for the product",
+            "type": "number"
+          },
+          "purchase_vat_ratio": {
+            "description": "The purchase tax (vat) ratio",
+            "type": "string"
+          },
+          "purchase_vat_amount": {
+            "description": "The purchase tax (vat) amount",
+            "type": "string"
+          },
+          "purchase_final_amount": {
+            "description": "The final purchase price of the product",
+            "type": "string"
+          },
+          "profit_ratio": {
+            "description": "Profit ration",
+            "type": "string"
+          },
+          "profit_amount": {
+            "description": "Profit amount",
+            "type": "string"
+          },
+          "metadata": {
+            "description": "Extra information about the product",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weight": {
+                  "type": "number"
+                },
+                "height": {
+                  "type": "number"
+                },
+                "width": {
+                  "type": "number"
+                },
+                "length": {
+                  "type": "number"
+                },
+                "link": {
+                  "type": "string"
+                },
+                "warranty": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "notes": {
+            "description": "Notes about the product",
+            "type": "string"
+          },
+          "mydata_income_category": {
+            "description": "Mydata income Category for wholesale",
+            "type": "string"
+          },
+          "mydata_income_type": {
+            "description": "Mydata income type for wholesale",
+            "type": "string"
+          },
+          "mydata_income_retail_category": {
+            "description": "Mydata income Category for retail",
+            "type": "string"
+          },
+          "mydata_income_retail_type": {
+            "description": "Mydata income type for retail",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Create date of the product",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update date of the product",
+            "type": "string"
+          }
+        },
+        "x-stoplight": {
+          "id": "6adazz5vhmtgg"
+        }
+      },
+      "ProductCategoryItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the category",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the category",
+            "type": "string"
+          },
+          "status": {
+            "description": "The status of the category",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string"
+          }
+        },
+        "x-stoplight": {
+          "id": "54nv0tfqpfgha"
+        }
+      },
+      "WarehouseItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the warehouse",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the warehouse",
+            "type": "string"
+          },
+          "status": {
+            "description": "The status of the warehouse",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string"
+          }
+        },
+        "x-stoplight": {
+          "id": "8xhh14zuh7nsb"
+        }
+      },
+      "VariationItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the variation",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the variation in Greek",
+            "type": "string"
+          },
+          "name_en": {
+            "description": "The name of the variation in English",
+            "type": "string"
+          },
+          "values": {
+            "description": "The value of the variation",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariationValueItem"
+            }
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string"
+          }
+        },
+        "x-stoplight": {
+          "id": "6cptogowl8f46"
+        }
+      },
+      "VariationValueItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the value",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the value",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string"
+          }
+        },
+        "x-stoplight": {
+          "id": "ifzion9xdr4ey"
+        }
+      },
+      "OxygenPaymentItem": {
+        "type": "object",
+        "x-stoplight": {
+          "id": "3cag98hne35ly"
+        },
+        "properties": {
+          "id": {
+            "description": "The ID of the oxygen payment",
+            "type": "string"
+          },
+          "number": {
+            "description": "The number of the oxygen payment",
+            "type": "string"
+          },
+          "business_area": {
+            "$ref": "#/components/schemas/BusinessAreaItem"
+          },
+          "description": {
+            "description": "The description of the oxygen payment",
+            "type": "boolean"
+          },
+          "amount": {
+            "description": "The amount of the oxygen payment",
+            "type": "number"
+          },
+          "contact": {
+            "description": "The contact of the oxygen payment",
+            "type": "object"
+          },
+          "expire_date": {
+            "description": "The expire date of the oxygen payment",
+            "type": "string"
+          },
+          "url": {
+            "description": "The url  of the oxygen payment",
+            "type": "string"
+          },
+          "is_paid": {
+            "description": "If the oxygen payment is paid or not",
+            "type": "boolean"
+          },
+          "paid_total_amount": {
+            "description": "The amount paiu",
+            "type": "number"
+          },
+          "fee_net_amount": {
+            "description": "The fee net amount",
+            "type": "number"
+          },
+          "fee_vat_amount": {
+            "description": "The fee vat amount",
+            "type": "number"
+          },
+          "fee_total_amount": {
+            "description": "The total fee amount",
+            "type": "number"
+          },
+          "refund_amount": {
+            "description": "The refund amount",
+            "type": "number"
+          },
+          "refund_date": {
+            "description": "The date of the refund",
+            "type": "string"
+          },
+          "comments": {
+            "description": "Comments",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string"
+          }
+        }
+      },
+      "LogoItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the contact",
+            "type": "string"
+          },
+          "title": {
+            "description": "Title of the logo.",
+            "type": "string"
+          },
+          "language": {
+            "description": "The language of the logo",
+            "type": "string",
+            "enum": [
+              "en",
+              "el"
+            ]
+          },
+          "branch_address": {
+            "description": "The address of the branch (if applicable).",
+            "type": "string",
+            "nullable": true
+          },
+          "mydata_store_code": {
+            "description": "The AADE branch code. 0 is main store.",
+            "type": "integer"
+          },
+          "details": {
+            "description": "Extra details for the logo",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "job_description": {
+                  "description": "Job description to overwrite the default one",
+                  "type": "string"
+                },
+                "job_telephone": {
+                  "description": "Job telephone to overwrite the default one",
+                  "type": "string"
+                },
+                "job_email": {
+                  "description": "Job email to overwrite the default one",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "image": {
+            "description": "The URL of the logo image",
+            "type": "string"
+          },
+          "is_default": {
+            "description": "Default log",
+            "type": "boolean"
+          },
+          "created_at": {
+            "description": "Creation date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-01-06 18:53:00"
+          },
+          "updated_at": {
+            "description": "Update date",
+            "type": "string",
+            "format": "string",
+            "example": "2021-03-05 22:53:00"
+          }
+        },
+        "x-stoplight": {
+          "id": "w1tkp6mandwqw"
+        }
+      },
+      "TaxisNetItem": {
+        "type": "object",
+        "properties": {
+          "vatNumber": {
+            "type": "string"
+          },
+          "taxAuthorityId": {
+            "type": "string"
+          },
+          "taxAuthorityName": {
+            "type": "string"
+          },
+          "flagDescription": {
+            "type": "string"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "validityDescription": {
+            "type": "string"
+          },
+          "firmFlagDescription": {
+            "type": "string"
+          },
+          "legalName": {
+            "type": "string"
+          },
+          "commerceTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "legalStatusDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "street": {
+            "type": "string"
+          },
+          "streetNumber": {
+            "type": "string"
+          },
+          "postcode": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "registrationDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "stopDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "normalVat": {
+            "type": "boolean"
+          },
+          "firms": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "kindDescription": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "x-stoplight": {
+          "id": "ig1d5u7s5p8uy"
+        }
+      },
+      "ShippingDetailsItem": {
+        "title": "ShippingDetailsItem",
+        "x-stoplight": {
+          "id": "2qe2rpbkd4e0l"
+        },
+        "type": "object",
+        "properties": {
+          "dispatched_at": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "1h5kx4ywf8p2w"
+            },
+            "format": "date-time"
+          },
+          "move_purpose": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "bnrxi9s4q7sgw"
+            }
+          },
+          "other_move_purpose_title": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "rnga3a36mbury"
+            }
+          },
+          "vehicle_number": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "smiwtxi9an6d5"
+            }
+          },
+          "pickup_branch_code": {
+            "type": "number",
+            "x-stoplight": {
+              "id": "wmdt0qle2y8kh"
+            }
+          },
+          "delivery_branch_code": {
+            "type": "integer",
+            "x-stoplight": {
+              "id": "hk57rpz2ytt8j"
+            }
+          },
+          "pickup_address": {
+            "type": "object",
+            "x-stoplight": {
+              "id": "nj7gblvqc0udj"
+            },
+            "required": [
+              "street",
+              "number",
+              "postal_code",
+              "city"
+            ],
+            "properties": {
+              "street": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "hxx1ky82wsa1u"
+                }
+              },
+              "number": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "dibrc17uxd8ig"
+                }
+              },
+              "postal_code": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "hcd5268qc5zwh"
+                }
+              },
+              "city": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "hiqiihqlsuvh7"
+                }
+              },
+              "country_code": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "43sxmfkyp3at4"
+                }
+              }
+            }
+          },
+          "delivery_address": {
+            "type": "object",
+            "x-stoplight": {
+              "id": "2ms6449frxlpk"
+            },
+            "required": [
+              "street",
+              "number",
+              "postal_code",
+              "city"
+            ],
+            "properties": {
+              "street": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "20jy74tyvtpaj"
+                }
+              },
+              "number": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "0gjr7q1qr469q"
+                }
+              },
+              "postal_code": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "djyd0fdf7ducm"
+                }
+              },
+              "city": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "vk94k8mfiimxm"
+                }
+              },
+              "country_code": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "lyug9vf1zxswr"
+                }
+              }
+            }
+          },
+          "delivery_details": {
+            "type": "object",
+            "x-stoplight": {
+              "id": "twyx5xc9378xj"
+            },
+            "properties": {
+              "name": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "mu60hjpp2op02"
+                }
+              },
+              "phone": {
+                "type": "string",
+                "x-stoplight": {
+                  "id": "a8oe43mtzxxiu"
+                }
+              }
+            }
+          },
+          "correlated_entities": {
+            "type": "array",
+            "x-stoplight": {
+              "id": "25gcfz6iuo1zy"
+            },
+            "items": {
+              "x-stoplight": {
+                "id": "rat0htkz7fcuy"
+              },
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "x-stoplight": {
+                    "id": "w6dmpr1y1gqty"
+                  }
+                },
+                "branch_code": {
+                  "type": "string",
+                  "x-stoplight": {
+                    "id": "aavhipgcsqcb3"
+                  }
+                },
+                "country_code": {
+                  "type": "string",
+                  "x-stoplight": {
+                    "id": "ysx7nbob21br5"
+                  }
+                },
+                "vat_number": {
+                  "type": "string",
+                  "x-stoplight": {
+                    "id": "t96lnryuorda0"
+                  }
+                },
+                "name": {
+                  "type": "string",
+                  "x-stoplight": {
+                    "id": "9sximxvs98182"
+                  }
+                },
+                "address": {
+                  "type": "object",
+                  "x-stoplight": {
+                    "id": "gj4ovvdv29v2h"
+                  },
+                  "properties": {
+                    "street": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "l5xnu2wx2qy9g"
+                      }
+                    },
+                    "number": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "w3zzg6z4393oe"
+                      }
+                    },
+                    "postal_code": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "tr5kxod54fmdk"
+                      }
+                    },
+                    "city": {
+                      "type": "string",
+                      "x-stoplight": {
+                        "id": "0x67urjkd9p65"
+                      }
+                    }
+                  },
+                  "required": [
+                    "street",
+                    "number",
+                    "postal_code",
+                    "city"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "branch_code",
+                "country_code",
+                "vat_number"
+              ]
+            }
+          }
+        },
+        "required": [
+          "move_purpose",
+          "pickup_branch_code",
+          "delivery_branch_code",
+          "pickup_address",
+          "delivery_address"
+        ]
+      },
+      "MeasurementUnitRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "abbreviation",
+          "mydata_code"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the measurement unit",
+            "maxLength": 25,
+            "example": "Kilogram"
+          },
+          "title_en": {
+            "type": "string",
+            "description": "The English title of the measurement unit",
+            "maxLength": 25,
+            "nullable": true,
+            "example": "Kilogram"
+          },
+          "abbreviation": {
+            "type": "string",
+            "description": "The abbreviation of the measurement unit",
+            "maxLength": 10,
+            "example": "kg"
+          },
+          "abbreviation_en": {
+            "type": "string",
+            "description": "The English abbreviation of the measurement unit",
+            "maxLength": 10,
+            "nullable": true,
+            "example": "kg"
+          },
+          "mydata_code": {
+            "type": "string",
+            "description": "The myDATA code for the measurement unit (must be a valid UnitMeasurement enum value)",
+            "enum": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            "example": "1",
+            "x-enum-descriptions": [
+              "1 - Τεμάχια (Pieces)",
+              "2 - Κιλά (Kilograms)",
+              "3 - Λίτρα (Liters)",
+              "4 - Μέτρα (Meters)",
+              "5 - Τετραγωνικά Μέτρα (Square Meters)",
+              "6 - Κυβικά Μέτρα (Cubic Meters)",
+              "7 - Τεμάχια_Λοιπές Περιπτώσεις (Pieces_Other Cases)"
+            ]
+          },
+          "peppol_code": {
+            "type": "string",
+            "description": "The PEPPOL code for the measurement unit",
+            "nullable": true,
+            "example": "KGM"
+          }
+        }
+      },
+      "MeasurementUnit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The UUID of the measurement unit",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "abbreviation": {
+            "type": "string",
+            "description": "The abbreviation of the measurement unit",
+            "example": "kg"
+          },
+          "abbreviation_en": {
+            "type": "string",
+            "description": "The English abbreviation of the measurement unit",
+            "nullable": true,
+            "example": "kg"
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the measurement unit",
+            "example": "Kilogram"
+          },
+          "title_en": {
+            "type": "string",
+            "description": "The English title of the measurement unit",
+            "nullable": true,
+            "example": "Kilogram"
+          },
+          "mydata_code": {
+            "type": "string",
+            "description": "The myDATA code for the measurement unit",
+            "enum": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            "example": "1",
+            "x-enum-descriptions": [
+              "1 - Τεμάχια (Pieces)",
+              "2 - Κιλά (Kilograms)",
+              "3 - Λίτρα (Liters)",
+              "4 - Μέτρα (Meters)",
+              "5 - Τετραγωνικά Μέτρα (Square Meters)",
+              "6 - Κυβικά Μέτρα (Cubic Meters)",
+              "7 - Τεμάχια_Λοιπές Περιπτώσεις (Pieces_Other Cases)"
+            ]
+          },
+          "peppol_code": {
+            "type": "string",
+            "description": "The PEPPOL code for the measurement unit",
+            "nullable": true,
+            "example": "KGM"
+          },
+          "service_invoice": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in service invoices",
+            "example": true
+          },
+          "product_invoice": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in product invoices",
+            "example": true
+          },
+          "service_receipt": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in service receipts",
+            "example": true
+          },
+          "product_receipt": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in product receipts",
+            "example": true
+          },
+          "credit_note": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in credit notes",
+            "example": true
+          },
+          "notice": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in notices",
+            "example": true
+          },
+          "warehouse": {
+            "type": "boolean",
+            "description": "Whether this unit can be used in warehouses",
+            "example": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The creation timestamp",
+            "example": "2023-01-01T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The last update timestamp",
+            "example": "2023-01-01T12:00:00Z"
+          }
+        }
+      },
+      "BusinessAreaItem": {
+        "title": "BusinessArea",
+        "x-stoplight": {
+          "id": "tnbsqt88bvqb2"
+        },
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "7kkpcwj6azubf"
+            },
+            "maxLength": 20
+          },
+          "name": {
+            "type": "string",
+            "x-stoplight": {
+              "id": "x4gmljkskd4vk"
+            },
+            "maxLength": 100
+          },
+          "status": {
+            "type": "boolean",
+            "x-stoplight": {
+              "id": "xn1lqr80ghit1"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name"
+        ]
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Access token is missing or invalid"
+      },
+      "ForbiddenError": {
+        "description": "Access denied on the specific resource"
+      },
+      "NotFoundError": {
+        "description": "Resource not found."
+      },
+      "ValidationError": {
+        "description": "Validation error with description of the errors",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string",
+                  "example": "The given data was invalid."
+                },
+                "errors": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}

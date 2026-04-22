@@ -180,6 +180,50 @@ label.field {
   margin: 14px 0;
 }
 
+/* Per-category markup override editor. One row per category with a narrow
+   percent input. Matches the outer field spacing/typography. */
+.category-markup-section {
+  margin: 14px 0;
+}
+.category-markup-head {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.category-markup-list {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px 10px;
+  max-width: 520px;
+  align-items: center;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  background: rgba(127,127,127,0.04);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+}
+.category-markup-row {
+  display: contents;
+}
+.category-markup-name {
+  font-size: 12px;
+  color: var(--text);
+  padding: 6px 0;
+}
+.category-markup-input {
+  width: 80px !important;
+  padding: 5px 8px !important;
+  font-size: 12px;
+  text-align: right;
+}
+.category-markup-suffix {
+  font-size: 11px;
+  color: var(--text-subtle);
+}
+
 label.field > span {
   display: block;
   font-size: 10px;

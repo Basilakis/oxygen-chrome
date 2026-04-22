@@ -113,8 +113,27 @@ function findFooter(container: HTMLElement): HTMLElement | null {
   return null
 }
 
+/**
+ * True when an element is in the DOM AND has non-zero layout size — catches
+ * the case where Kendo re-renders the modal and keeps our button in a
+ * detached or `display:none`-ified subtree. If the button is "there" but
+ * hidden, we want to treat it as missing and re-inject.
+ */
+function isVisiblyPresent(el: HTMLElement | null): boolean {
+  if (!el || !el.isConnected) return false
+  const rect = el.getBoundingClientRect()
+  if (rect.width === 0 && rect.height === 0) return false
+  const style = window.getComputedStyle(el)
+  if (style.display === 'none' || style.visibility === 'hidden') return false
+  return true
+}
+
 function injectInline(container: HTMLElement): boolean {
-  if (container.querySelector(`.${SENTINEL_CLASS}`)) return true
+  const existing = container.querySelector<HTMLElement>(`.${SENTINEL_CLASS}`)
+  if (existing && isVisiblyPresent(existing)) return true
+  // Stale/hidden button — drop it so the fresh one lands in the current
+  // footer that the modal is actually rendering now.
+  existing?.remove()
   const footer = findFooter(container)
   if (!footer) return false
   const btn = buildButton()
@@ -244,6 +263,20 @@ const observer = new MutationObserver(() => {
 
 observer.observe(document.documentElement, { childList: true, subtree: true })
 tick()
+
+// Health-check interval. The MutationObserver catches most modal rebuilds,
+// but SPAs occasionally swap DOM subtrees without emitting a mutation we
+// observe (attribute-only changes, reused elements, microtask-batched
+// updates). A lightweight poll every 3s closes that gap — if a modal is
+// open and our button has gone missing or invisible, tick() will re-inject.
+setInterval(() => tick(), 3000)
+
+// When the tab comes back into focus after a long idle (Chrome can throttle
+// or partially suspend background tabs, and SPAs can swap DOM while hidden),
+// run an immediate tick instead of waiting for the next poll.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') tick()
+})
 
 // Listen for context-menu events forwarded from the SW
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {

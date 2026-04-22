@@ -80,7 +80,18 @@ export async function apiRequest<T = unknown>(
   }
 
   const attempt = async (): Promise<T> => {
-    const res = await fetch(url, { method, headers, body, signal: opts.signal })
+    // Bypass the HTTP cache on every request. Oxygen's responses can land
+    // with whatever Cache-Control header they happen to set (we've seen
+    // stale category lists served back after deletions), and we want
+    // every sync to hit the origin. `no-store` also prevents the
+    // response from being stored for future requests.
+    const res = await fetch(url, {
+      method,
+      headers,
+      body,
+      signal: opts.signal,
+      cache: 'no-store',
+    })
     const raw = await res.text()
     let parsed: unknown = null
     if (raw) {

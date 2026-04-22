@@ -29,13 +29,117 @@ export function sumStock(
   )
 }
 
+/**
+ * Extract physical dimensions from a product name by scanning for an
+ * AxBxC descriptor. Handles common Greek-invoice formats like:
+ *   "ΤΖΑΜΙ 4100x640x8mm"       → 4100 × 640 × 8 mm
+ *   "ΠΛΑΚΑΚΙ 60x60cm"          → 600 × 600 mm (normalised)
+ *   "ΞΥΛΟ 2.5x1.2m"            → 2500 × 1200 mm
+ *   "ΠΑΝΕΛ 1200 x 2400 mm"     → 1200 × 2400 mm
+ *
+ * Rules:
+ *   - Two or three numbers separated by `x`/`X`/`×` (with optional spaces).
+ *   - Optional trailing unit (`mm`/`cm`/`m`); defaults to mm (AADE norm).
+ *   - Returns every captured dimension in BOTH the original unit and
+ *     millimetres so callers can pick (display vs. storage).
+ *   - `height` / `third` is the smallest value in panels (thickness/depth);
+ *     we don't relabel it because Oxygen's metadata schema uses the three
+ *     words width/length/height directly and the convention is up to the
+ *     product type. Callers map freely.
+ *   - Returns null if no WxH pair is detected.
+ */
+export type ParsedDimensions = {
+  widthM: number
+  heightM: number
+  areaSqm: number
+  unitLabel: 'mm' | 'cm' | 'm'
+  source: string
+  /** Raw numbers as they appeared in the name, unit-preserved. */
+  raw: { a: number; b: number; c?: number }
+  /** All three dimensions normalised to millimetres (most common Oxygen unit). */
+  mm: { width: number; length: number; height?: number }
+}
+
+export function parseAreaFromName(name: string): ParsedDimensions | null {
+  if (!name) return null
+  // Capture TWO required numbers + ONE optional number joined by x/X/×, plus
+  // an optional unit suffix anchored at the end of the triple.
+  const rx = /(\d+(?:[.,]\d+)?)\s*[xX×]\s*(\d+(?:[.,]\d+)?)(?:\s*[xX×]\s*(\d+(?:[.,]\d+)?))?\s*(mm|cm|m)?\b/i
+  const m = name.match(rx)
+  if (!m) return null
+  const a = parseMoney(m[1]!)
+  const b = parseMoney(m[2]!)
+  const cRaw = m[3]
+  const c = cRaw ? parseMoney(cRaw) : undefined
+  if (!Number.isFinite(a) || !Number.isFinite(b) || a <= 0 || b <= 0) return null
+  const rawUnit = (m[4] ?? 'mm').toLowerCase() as 'mm' | 'cm' | 'm'
+  const toMeters = rawUnit === 'm' ? 1 : rawUnit === 'cm' ? 0.01 : 0.001
+  const toMm = rawUnit === 'm' ? 1000 : rawUnit === 'cm' ? 10 : 1
+  const widthM = a * toMeters
+  const heightM = b * toMeters
+  return {
+    widthM,
+    heightM,
+    areaSqm: round2(widthM * heightM * 1000) / 1000, // 3-dp for tiny panels
+    unitLabel: rawUnit,
+    source: m[0]!,
+    raw: { a, b, c },
+    mm: {
+      width: Math.round(a * toMm),
+      length: Math.round(b * toMm),
+      height: c !== undefined && Number.isFinite(c) && c > 0 ? Math.round(c * toMm) : undefined,
+    },
+  }
+}
+
+/**
+ * Parse a number string that may be formatted in Greek/European (`1.234,56`),
+ * US (`1,234.56`), or plain (`5.796`) style. The previous implementation
+ * stripped every `.` followed by exactly 3 digits as a thousand separator,
+ * which mangled legitimate decimals like `5.796` into `5796`. This version
+ * disambiguates by counting separators and picking the decimal as the last
+ * separator to appear.
+ *
+ * Rules:
+ *   - Only one `.` and no `,` → `.` is the decimal (preserves `5.796`).
+ *   - Only one `,` and no `.` → `,` is the decimal (Greek: `5,796` → 5.796).
+ *   - Multiple `.` and no `,` → all thousand separators (`1.234.567` → 1234567).
+ *   - Multiple `,` and no `.` → all thousand separators (`1,234,567` → 1234567).
+ *   - Both present → the LAST-appearing separator is the decimal, the other
+ *     is thousands. Handles both `1.234,56` (European) and `1,234.56` (US).
+ */
 export function parseMoney(s: string | number | undefined | null): number {
   if (s === null || s === undefined) return 0
   if (typeof s === 'number') return s
-  const normalized = s
-    .replace(/[^\d,.\-]/g, '')
-    .replace(/\.(?=\d{3}(\D|$))/g, '')
-    .replace(',', '.')
+  const str = s.toString().replace(/[^\d,.\-]/g, '')
+  if (!str) return 0
+
+  const dotCount = (str.match(/\./g) || []).length
+  const commaCount = (str.match(/,/g) || []).length
+
+  let normalized: string
+  if (dotCount === 0 && commaCount === 0) {
+    normalized = str
+  } else if (dotCount >= 1 && commaCount >= 1) {
+    const lastDot = str.lastIndexOf('.')
+    const lastComma = str.lastIndexOf(',')
+    if (lastComma > lastDot) {
+      // European: `1.234,56`
+      normalized = str.replace(/\./g, '').replace(',', '.')
+    } else {
+      // US: `1,234.56`
+      normalized = str.replace(/,/g, '')
+    }
+  } else if (dotCount > 1) {
+    normalized = str.replace(/\./g, '')
+  } else if (commaCount > 1) {
+    normalized = str.replace(/,/g, '')
+  } else if (commaCount === 1) {
+    normalized = str.replace(',', '.')
+  } else {
+    // Single `.`, no commas → decimal, leave as-is.
+    normalized = str
+  }
   const n = parseFloat(normalized)
   return Number.isFinite(n) ? n : 0
 }

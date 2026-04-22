@@ -53,7 +53,7 @@ import {
   updateDraft,
   updateLine,
 } from '@/background/drafts/manager'
-import { createProductsSequential, resolveSupplier } from '@/background/handlers/flow1'
+import { createProductsSequential, findVariationFamily, resolveSupplier, updateProductsSequential } from '@/background/handlers/flow1'
 import { runAgentTurn, testConnection as testAgentConnection } from '@/background/agent'
 import {
   listSessions as agentListSessions,
@@ -299,6 +299,7 @@ export async function handle(message: Message): Promise<MessageResponse> {
       const sku = await suggestSku({
         description: message.description,
         categoryName: message.categoryName,
+        offset: message.offset,
       })
       return { ok: true, sku } as MessageResponse
     }
@@ -309,6 +310,14 @@ export async function handle(message: Message): Promise<MessageResponse> {
     case 'flow1/create-products': {
       const results = await createProductsSequential(message.supplier_id, message.products)
       return { ok: true, results } as unknown as MessageResponse
+    }
+    case 'flow1/update-products': {
+      const results = await updateProductsSequential(message.updates)
+      return { ok: true, results } as unknown as MessageResponse
+    }
+    case 'flow1/find-variation-family': {
+      const family = await findVariationFamily(message.description)
+      return { ok: true, family } as unknown as MessageResponse
     }
     case 'flow1/scrape-detected':
       return { ok: true } as MessageResponse

@@ -124,10 +124,15 @@ function normalizeWarehouse(raw: unknown): Warehouse {
 
 function normalizeCategory(raw: unknown): ProductCategory {
   const r = raw as Record<string, unknown>
+  // Preserve undefined for status — if the API omitted the field we don't
+  // want to assume "inactive" (which would hide every category with a
+  // minimal response). Only coerce when a value is actually present.
+  const statusRaw = r.status
+  const status = statusRaw === undefined || statusRaw === null ? undefined : toBool(statusRaw)
   return {
     id: toId(r.id),
     name: String(r.name ?? ''),
-    status: toBool(r.status),
+    status,
     parent_id: r.parent_id ? toId(r.parent_id) : null,
   }
 }
