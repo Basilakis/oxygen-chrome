@@ -9,6 +9,7 @@ import {
   Products,
   Sync,
   Taxes,
+  Variations,
   Warehouses,
 } from '@/background/storage/stores'
 import {
@@ -21,6 +22,7 @@ import {
   getProductCategories,
   getProducts,
   getTaxes,
+  getVariations,
   getWarehouses,
 } from '@/background/api/endpoints'
 import { rebuildFromDB } from '@/background/search'
@@ -45,6 +47,11 @@ export async function runIncremental(): Promise<void> {
       { name: 'numbering_sequences', run: async () => await NumberingSequences.replaceAll(await getNumberingSequences()) },
       { name: 'logos', run: async () => await Logos.replaceAll(await getLogos()) },
       { name: 'business_areas', run: async () => await BusinessAreas.replaceAll(await getBusinessAreas()) },
+      // Variations were missing from the incremental sync — only bootstrap
+      // pulled them. That meant new variation types created via the Oxygen
+      // API never showed up in the prefill modal's dropdown until the user
+      // manually ran Πλήρης συγχρονισμός.
+      { name: 'variations', run: async () => await Variations.replaceAll(await getVariations()) },
       { name: 'contacts', run: async () => await Contacts.replaceAll(await getContacts()) },
       { name: 'products', run: async () => await Products.replaceAll(await getProducts()) },
     ]

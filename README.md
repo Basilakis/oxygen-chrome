@@ -2,9 +2,9 @@
 
 Εργαλείο για χρήστες του [Oxygen Pelatologio](https://oxygen.gr) που καλύπτει τρία κενά στο υπάρχον UI:
 
-1. **Δημιουργία προϊόντων από παραστατικά ΑΑΔΕ** (μόνο Chrome extension, λόγω scraping του modal)
+1. **Δημιουργία & ενημέρωση προϊόντων από παραστατικά ΑΑΔΕ** (μόνο Chrome extension, λόγω scraping του modal)
 2. **Αναζήτηση στον κατάλογο** από οπουδήποτε (extension + web app)
-3. **Πρόχειρα λίστες** αγορών που μετατρέπονται σε Δελτία/Τιμολόγια (extension + web app)
+3. **Ειδοποιήσεις** (πρόχειρες λίστες) αγορών που μετατρέπονται σε Δελτία/Τιμολόγια (extension + web app)
 4. **Βοηθός AI (JARVIS)** — ρωτάς με φυσική γλώσσα για τα δεδομένα σου, απαντάει χρησιμοποιώντας τοπικά εργαλεία
 
 Διαθέσιμο σε δύο μορφές:
@@ -20,7 +20,7 @@
 - [Εγκατάσταση](#εγκατάσταση)
 - [Ρυθμίσεις](#ρυθμίσεις)
 - [Χρήση](#χρήση)
-- [Πρόχειρα & Δελτία](#πρόχειρα--δελτία)
+- [Ειδοποιήσεις & Δελτία](#ειδοποιήσεις--δελτία)
 - [Βοηθός AI (JARVIS)](#βοηθός-ai-jarvis)
 - [Αντιμετώπιση προβλημάτων](#αντιμετώπιση-προβλημάτων)
 - [Ανάπτυξη (για developers)](#ανάπτυξη-για-developers)
@@ -29,20 +29,35 @@
 
 ## Χαρακτηριστικά
 
-### Flow 1 — Δημιουργία προϊόντων από παραστατικό ΑΑΔΕ _(μόνο Chrome)_
+### Flow 1 — Δημιουργία & ενημέρωση προϊόντων από παραστατικό ΑΑΔΕ _(μόνο Chrome)_
 
 Όταν ανοίγεις ένα παραστατικό από τη λίστα «Παραστατικά σε εκκρεμότητα» στο Oxygen, εμφανίζεται ένα κουμπί **"➕ Δημιουργία νέων"**. Με ένα κλικ:
 
 - Διαβάζονται όλες οι γραμμές του τιμολογίου (περιγραφή, ποσότητα, τιμή, ΦΠΑ, κωδικός προμηθευτή)
 - Ταυτοποιείται ο προμηθευτής μέσω ΑΦΜ (με αυτόματη δημιουργία αν δεν υπάρχει, μέσω `/vat-check`)
-- Ανιχνεύονται πιθανά duplicate προϊόντα
-- Ανοίγει φόρμα προ-συμπληρωμένη με όλα τα πεδία της Oxygen: Περιγραφή, SKU, Τύπος, Κατηγορία, Μονάδα, Barcode, PC ή PN, CPV, TARIC, Όριο αποθέματος, τιμές αγοράς/πώλησης, ΦΠΑ, myData κατηγορίες
-- Υποστηρίζει παραλλαγές (π.χ. "ΠΑΧΟΣ ΜΕΛΑΜΙΝΗΣ" με πολλές τιμές → δημιουργεί αυτόματα ένα προϊόν ανά παραλλαγή με κωδικό `5.1`, `5.2`...)
-- Αποστολή ως `POST /products` με όλα τα πεδία
+- **Duplicate detection σε δύο επίπεδα**:
+  - Αρχικά: match ανά supplier_code / barcode / mpn / part_number
+  - **Live name probe**: καθώς ο χρήστης επεξεργάζεται την περιγραφή, γίνεται debounced search στον κατάλογο. Αν βρεθεί πιθανό match, εμφανίζεται ένα κίτρινο banner με «Χρήση υπάρχοντος» που μετατρέπει τη γραμμή σε **UPDATE** flow
+- **Δύο μονάδες μέτρησης ανά γραμμή**:
+  - **Μονάδα Τιμολόγισης** (scraped από το invoice) vs **Μονάδα Αποθήκης** (user-editable)
+  - Όταν διαφέρουν (π.χ. τ.μ. → τεμ.), auto-conversion panel υπολογίζει `m²/τεμ.` από τις διαστάσεις στο όνομα (π.χ. "ΤΖΑΜΙ 4100×640×8mm" → 2.624 m²/τεμ.), μετατρέπει ποσότητα και τιμή, όλα editable
+- **Metadata από το όνομα**: auto-fill για Πλάτος/Μήκος/Ύψος (mm) όταν ανιχνευτεί `AxBxC` pattern. Plus Βάρος (kg), Link, Εγγύηση — όλα στο `metadata` array του POST payload
+- **Per-line markup %**: default από per-category override (βλ. Ρυθμίσεις) ή global default. Live recalc της τιμής πώλησης όταν αλλάζει markup ή τιμή αγοράς
+- Ανοίγει φόρμα προ-συμπληρωμένη με όλα τα πεδία της Oxygen (με searchable dropdown για Κατηγορία, indented tree αν έχεις ορίσει ιεραρχία)
+- **Προϊόν με παραλλαγές**: ενεργοποιείς switcher → αν βρεθεί ήδη family με το ίδιο όνομα (`OX5.1`, `OX5.2`), παίρνει το base SKU και συνεχίζει στο `OX5.3`. Αλλιώς νέα family
+- **Update mode για existing products**: για κάθε γραμμή που ταιριάζει σε υπάρχον προϊόν:
+  - Checkbox **Προσθήκη αποθέματος: +N τεμ.** (fetch-fresh + PUT /products με συνδυασμένο stock)
+  - Checkbox **Ενημέρωση τιμής αγοράς: old → new** (αν διαφέρει, auto-ON, με +/- delta)
+- **SKU auto-detect** λαμβάνει υπόψη variation children: `6.1` και `6.2` δεσμεύουν το "6" ως parent → επόμενο προϊόν γίνεται "7"
+- Αποστολή σε δύο παράλληλα batches: `POST /products` για νέα, `PUT /products/:id` για updates
+
+**Decimal parsing**: `5.796 τ.μ.` διατηρείται ως decimal (ο παλιός κώδικας το έκοβε σε 5796 λόγω Greek thousand-separator confusion).
 
 ### Flow 2 — Αναζήτηση στον τοπικό κατάλογο
 
 - Τοπικός cache όλων των προϊόντων (IndexedDB + MiniSearch) — ταχύτατη αναζήτηση offline
+- **Parallel search** στην καρτέλα Αναζήτηση: κάθε query στέλνεται ταυτόχρονα σε local + remote (Oxygen API). Local εμφανίζεται άμεσα με `⚪ Από τον τοπικό cache`, μετά remote φτάνει και το αντικαθιστά με `🟢 Ενημερωμένα από το Oxygen` (merged — remote wins για duplicate IDs)
+- **Two-pass local matching**: πρώτα AND (όλα τα tokens), αν αποτύχει OR fallback με relative-coverage threshold (drops "brand-only" noise). Ferrara Beige ταιριάζει σε "Keros Ferrara Beige 60×120…" αλλά "ΠΑΓΚΟΣ EGGER F234" **δεν** ταιριάζει σε "ΠΑΓΚΟΣ EGGER H3331 ST10…"
 - Fuzzy matching για ορθογραφικά λάθη (π.χ. `Ferrara` → `FERARRA`)
 - Στήριξη Ελληνικών tonos-insensitive (π.χ. `ΠΛΑΚΆΚΙΑ` = `πλακακια`)
 - Δύο επίπεδα αποτελεσμάτων: **Ακριβής αντιστοίχιση** (code / barcode / MPN) και **Πιθανές αντιστοιχίσεις** (fuzzy)
@@ -51,15 +66,26 @@
 - Από αυτόματο εντοπισμό σε προϊοντικές σελίδες (JSON-LD / OpenGraph / heuristic) _(extension)_
 - Από απευθείας πληκτρολόγηση στην καρτέλα Αναζήτηση _(extension + web)_
 
-### Flow 3 — Πρόχειρα & Δελτία
+**Auto-detect badge** (κάτω δεξιά σε product pages):
+- 3 καταστάσεις: 🟢 ΒΡΕΘΗΚΕ (exact), 🟡 ΠΙΘΑΝΟ (fuzzy), 🔴 ΛΕΙΠΕΙ (no match)
+- **Κλικ στο match** → ανοίγει compact popover με: Κατηγορία, Μονάδα, Barcode, Part Number, Supplier Code, Τιμή αγοράς/πώλησης, Απόθεμα, και **"Match: ακριβές · πεδίο: όνομα"** που εξηγεί γιατί ταίριαξε
+- **Πολλαπλά matches**: λίστα εναλλακτικών από κάτω, click για να αλλάξεις ποιο εμφανίζεται
+- **Domain denylist**: badge δεν τρέχει καθόλου σε Atlassian/Jira/Confluence, GitHub/GitLab, Google Workspace, Microsoft 365, Slack/Discord, Notion/Linear/Asana/Figma, social media — όπου single-h1 pages θα προκαλούσαν false positives
+- Per-product dismiss με × (sessionStorage memory)
 
-- Καρφιτσώνεις προϊόντα σε ένα πρόχειρο από οπουδήποτε _(extension: δεξί κλικ, web app: manual)_
-- Επεξεργάζεσαι το πρόχειρο με πλήρη editor: πελάτης, σειρά αρίθμησης, ημερομηνίες, γραμμές με Αναζήτηση/Περιγραφή/Μ/Μ/Ποσότητα/Τιμή/Έκπτωση/ΦΠΑ/Σύνολα
+**Auto-sync on open**: κάθε άνοιγμα popup/web-app κάνει throttled incremental sync (2-minute threshold). Badge `🔄 συγχρονισμός…` → `✓ ενημερώθηκε` στο header. Σιγουρεύει ότι το local cache ακολουθεί τις αλλαγές στο Oxygen χωρίς manual refresh.
+
+### Flow 3 — Ειδοποιήσεις & Δελτία
+
+- Καρφιτσώνεις προϊόντα σε μία **ειδοποίηση** από οπουδήποτε _(extension: δεξί κλικ → "Καρφίτσωμα στην τρέχουσα ειδοποίηση", web app: manual)_
+- Επεξεργάζεσαι την ειδοποίηση με πλήρη editor: πελάτης, σειρά αρίθμησης, ημερομηνίες, γραμμές με Αναζήτηση/Περιγραφή/Μ/Μ/Ποσότητα/Τιμή/Έκπτωση/ΦΠΑ/Σύνολα
 - Υποστήριξη "Η τιμή περιλαμβάνει ΦΠΑ" toggle με σωστή αντιστροφή των υπολογισμών
 - Υποβολή ως **Δελτίο Παραγγελίας** (`POST /notices`)
 - Προαιρετική μετατροπή σε **Τιμολόγιο** (`POST /invoices` με `notice_id`)
 - Για ταιριασμένα προϊόντα: στέλνουμε μόνο `{code, quantity}` και ο server συμπληρώνει τα υπόλοιπα
 - Για manual γραμμές: στέλνουμε πλήρες breakdown με default myDATA classification
+
+> Παλιότερα το feature λεγόταν «Πρόχειρα». Πλέον ονομάζεται «Ειδοποιήσεις» σε όλα τα UI labels — το backend data model παραμένει το ίδιο (δεν χρειάζεται migration).
 
 ### Flow 1β — Τιμολόγιο από PDF / φωτογραφία (web app + extension)
 
@@ -82,7 +108,7 @@
 - Νέα καρτέλα στο popup
 - Ενεργοποιείται **μόνο** όταν η ερώτηση ξεκινά με `JARVIS tell me` ή `JARVIS πες μου` — εξοικονομούμε tokens
 - Τοπικές εντολές με `/` για άμεσες απαντήσεις χωρίς API call: `/search`, `/product`, `/stock`, `/drafts`, `/stats`, `/help`
-- Ο βοηθός έχει πρόσβαση μέσω 13 εργαλείων read-only: αναζήτηση, λεπτομέρειες προϊόντων, λίστες επαφών, ΦΠΑ, αποθήκες, κατηγορίες, παραλλαγές, πρόχειρα, αποθέματα κ.ά.
+- Ο βοηθός έχει πρόσβαση μέσω 13 εργαλείων read-only: αναζήτηση, λεπτομέρειες προϊόντων, λίστες επαφών, ΦΠΑ, αποθήκες, κατηγορίες, παραλλαγές, ειδοποιήσεις, αποθέματα κ.ά.
 - Αποθήκευση ιστορικού συνομιλιών (📜) — μπορείς να ξαναδείς ή να συνεχίσεις παλιές συνομιλίες
 - Collapsible βοήθεια (ℹ) στην επάνω δεξιά γωνία
 - Καθαρισμός τρέχουσας συνομιλίας (🗑) ανοίγει νέα session
@@ -150,38 +176,36 @@ npm run build
 3. Περίμενε να κατέβουν όλα τα δεδομένα (λίγα δευτερόλεπτα έως λίγα λεπτά, ανάλογα με το μέγεθος του καταλόγου σου)
 4. Τα counts εμφανίζονται στην κάτω ενότητα: προϊόντα, επαφές, ΦΠΑ, αποθήκες, κ.ά.
 
-Ο αυτόματος συγχρονισμός τρέχει κάθε 60 λεπτά. Μπορείς να αλλάξεις το διάστημα.
+Ο αυτόματος συγχρονισμός τρέχει κάθε 60 λεπτά (alarms) + σε κάθε άνοιγμα popup/web-app με 2-λεπτο throttle. Μπορείς να αλλάξεις το 60-λεπτο διάστημα. Κουμπί **"Ενημέρωση τώρα"** στην ίδια σειρά για manual trigger.
 
-### 3. Προεπιλογές (προαιρετικά)
-
-Αφού γίνει ο πλήρης συγχρονισμός, ξεκλειδώνει η ενότητα **"Προεπιλογές"**:
-
-- Προεπιλεγμένη αποθήκη
-- Προεπιλεγμένη κατηγορία προϊόντων
-- Προεπιλεγμένος ΦΠΑ
-- Αρίθμηση τιμολογίων / δελτίων
-- Τρόπος πληρωμής
-- Λογότυπο
-- Προεπιλεγμένη μονάδα μέτρησης
-
-Όλα αυτά θα χρησιμοποιηθούν ως defaults στις φόρμες δημιουργίας.
-
-### 4. SKU & τιμολόγηση
+### 3. SKU & τιμολόγηση
 
 - **Στρατηγική παραγωγής SKU**:
   - _Αυτόματος εντοπισμός μοτίβου_ (default) — ανιχνεύει το μοτίβο από τον υπάρχοντα κατάλογο
   - _Αύξων αριθμός_ — απλά incrementing integers (1, 2, 3...) όπως στο Oxygen default
   - _Με πρόθεμα_ — π.χ. `OX-0001`
   - _Ανά κατηγορία_ — π.χ. `ΠΛΑΚ-001`
-- **Markup πώλησης** — ποσοστό πάνω στην τιμή αγοράς για πρόταση τιμής πώλησης
+- **Variation-aware auto-detect**: `6.1` και `6.2` δεσμεύουν το "6" ως parent, οπότε το επόμενο SKU γίνεται "7" (όχι "6" που θα δημιουργούσε collision)
+- **Markup πώλησης — προεπιλογή** — global % πάνω στην τιμή αγοράς
+- **Markup ανά κατηγορία** — εμφανίζονται όλες οι κατηγορίες (μόνο active, τις διαγραμμένες τις φιλτράρουμε). Per-category override: άδειο = χρήση της προεπιλογής
+- **Ιεραρχία κατηγοριών (local only)** — το Oxygen API εκθέτει τις κατηγορίες ως flat list. Εδώ ορίζεις parent ανά κατηγορία τοπικά, και ο dropdown στη δημιουργία προϊόντος δείχνει indented tree:
+  ```
+  Έπιπλα
+    └ Μπάνιο
+    └ Κουζίνας
+  Πλακάκια
+    └ Δαπέδου
+  ```
+  Cycle guard: μπορείς να θέσεις σαν parent κάθε κατηγορία ΕΚΤΟΣ από descendants της ίδιας (το dropdown τους αφαιρεί αυτόματα). **Η δομή είναι cosmetic — δεν αποθηκεύεται στον Oxygen server.**
+- 🔄 **Ενημέρωση λίστας** button για force sync αν ενημέρωσες κατηγορίες στο Oxygen UI και θες να τις δεις αμέσως (παρακάμπτει το 2-min throttle)
 
-### 5. Συμπεριφορά
+### 4. Συμπεριφορά
 
 - **Αυτόματη δημιουργία προμηθευτή** μέσω `/vat-check` αν δεν υπάρχει _(συνιστάται)_
-- **Αυτόματος εντοπισμός προϊόντος** σε σελίδες — ενεργοποιεί το floating badge σε προϊοντικές σελίδες _(extension)_
+- **Αυτόματος εντοπισμός προϊόντος** σε σελίδες — ενεργοποιεί το auto-badge με product details popover _(extension, με domain denylist για SaaS tools)_
 - **Ειδοποιήσεις** για σφάλματα σύνδεσης 401
 
-### 6. Βοηθός AI
+### 5. Βοηθός AI
 
 Το κλειδί του Anthropic μπαίνει σε **διαφορετικό μέρος** για κάθε shell:
 
@@ -200,8 +224,8 @@ npm run build
 
 ### Καρτέλες
 
-- **Αναζήτηση** — άμεση fuzzy αναζήτηση στον τοπικό κατάλογο
-- **Πρόχειρα** — editor πρόχειρων, λίστα πρόχειρων, υποβολή ως Δελτίο
+- **Αναζήτηση** — parallel search (local instant + remote freshness badge), αποτελέσματα σε Ακριβή + Πιθανά tiers
+- **Ειδοποιήσεις** — editor ειδοποιήσεων, λίστα, υποβολή ως Δελτίο
 - **Βοηθός** — AI chat με JARVIS
 - **Κατάσταση** — σύνδεση, πλήθη δεδομένων, manual sync
 - **Ρυθμίσεις** _(μόνο web app)_ — όλες οι ενότητες settings inline (στο extension είναι σε ξεχωριστή options page)
@@ -213,13 +237,14 @@ npm run build
 1. Άνοιξε το extension
 2. Καρτέλα Αναζήτηση → πληκτρολόγησε περιγραφή, SKU, barcode, MPN, ή κωδικό προμηθευτή
 3. Αποτελέσματα εμφανίζονται σε 2 ομάδες: Ακριβής αντιστοίχιση (πράσινη), Πιθανές αντιστοιχίσεις (γκρι)
-4. Πάτησε **"Στο πρόχειρο"** για να προσθέσεις προϊόν στο ενεργό πρόχειρο
+4. Πάτησε **"Στην ειδοποίηση"** για να προσθέσεις προϊόν στην ενεργή ειδοποίηση
 
 **Από οπουδήποτε στον browser:**
 
 - **Δεξί κλικ σε επιλεγμένο κείμενο** → "Αναζήτηση στην αποθήκη" → ανοίγει floating card με αποτελέσματα
 - **Δεξί κλικ → "Oxygen: Επιλογή τίτλου προϊόντος από σελίδα"** → cursor γίνεται crosshair, κλικ στον τίτλο → ανοίγει αναζήτηση
 - **Κουμπί 📍 στην καρτέλα Αναζήτηση** → ενεργοποιείται picker στην ενεργή καρτέλα browser
+- **Auto-badge σε product pages** → εμφανίζεται αυτόματα με ένδειξη match status. Κλικ για popover με πλήρεις ERP λεπτομέρειες (τιμές, απόθεμα, supplier code) + εναλλακτικά matches
 
 ### Δημιουργία προϊόντος από τιμολόγιο _(Flow 1, extension only)_
 
@@ -235,17 +260,17 @@ npm run build
 
 ---
 
-## Πρόχειρα & Δελτία
+## Ειδοποιήσεις & Δελτία
 
-### Δημιουργία πρόχειρου
+### Δημιουργία ειδοποίησης
 
-**Αυτόματα**: δεξί κλικ σε οποιαδήποτε σελίδα → "Καρφίτσωμα στο τρέχον πρόχειρο" (αν δεν υπάρχει ενεργό, δημιουργείται νέο).
+**Αυτόματα**: δεξί κλικ σε οποιαδήποτε σελίδα → "Καρφίτσωμα στην τρέχουσα ειδοποίηση" (αν δεν υπάρχει ενεργή, δημιουργείται νέα).
 
-**Manual**: Καρτέλα Πρόχειρα → **"+ Νέο πρόχειρο"**
+**Manual**: Καρτέλα Ειδοποιήσεις → **"+ Νέα ειδοποίηση"**
 
 ### Επεξεργασία
 
-Το ενεργό πρόχειρο έχει editor με τρεις ενότητες, ίδιες όπως στο Oxygen UI:
+Η ενεργή ειδοποίηση έχει editor με τρεις ενότητες, ίδιες όπως στο Oxygen UI:
 
 1. **Στοιχεία επαφής**:
    - Αναζήτηση πελάτη (autocomplete από local cache)
@@ -259,18 +284,18 @@ npm run build
 
 3. **Υποβολή** — διαθέσιμη όταν έχεις πελάτη + τουλάχιστον μία γραμμή resolved
 
-### Διαγραφή πρόχειρου
+### Διαγραφή ειδοποίησης
 
 Δύο σημεία:
 
-- Στη **λίστα πρόχειρων** επάνω (πάντα ορατή): **"Διαγραφή"** σε κάθε row
-- Στο **topbar του editor** του ενεργού πρόχειρου: **"🗑 Διαγραφή"** (δεξιά)
+- Στη **λίστα ειδοποιήσεων** επάνω (πάντα ορατή): **"Διαγραφή"** σε κάθε row
+- Στο **topbar του editor** της ενεργής ειδοποίησης: **"🗑 Διαγραφή"** (δεξιά)
 
 ### Υποβολή
 
 1. Επιβεβαιώνεις τα στοιχεία
 2. Πάτησε **"Υποβολή ως Δελτίο"**
-3. Επιτυχία → το πρόχειρο γίνεται `status: submitted`
+3. Επιτυχία → η ειδοποίηση γίνεται `status: submitted`
 4. Γίνεται ερώτηση "Μετατροπή σε Τιμολόγιο;" — αν ναι, δημιουργείται invoice με `notice_id`
 
 ---
@@ -304,7 +329,7 @@ npm run build
 | `/search <όρος>` | Αναζήτηση στον τοπικό κατάλογο |
 | `/product <κωδικός>` | Λεπτομέρειες προϊόντος |
 | `/stock <κωδικός>` | Αποθέματα ανά αποθήκη |
-| `/drafts` | Λίστα όλων των πρόχειρων |
+| `/drafts` | Λίστα όλων των ειδοποιήσεων |
 | `/stats` | Συνολικά μεγέθη (count ανά είδος) |
 | `/help` | Λίστα εντολών |
 
@@ -354,7 +379,23 @@ npm run build
 
 ### Δεν εμφανίζονται παραλλαγές στο prefill modal
 
-Τρέξε **Πλήρης συγχρονισμός** — το endpoint `/variations` πιθανόν δεν έχει κατέβει ακόμα. Μετά από sync, το dropdown θα γεμίσει.
+Οι variations πλέον συγχρονίζονται και με incremental sync (όχι μόνο bootstrap). Αν ακόμα λείπουν:
+1. Ρυθμίσεις → Συγχρονισμός → **Ενημέρωση τώρα**
+2. Αν ακόμα λείπουν → **Πλήρης συγχρονισμός** (σπάνια χρειάζεται αλλά είναι το nuclear option)
+
+### Stale local cache (κατηγορίες/προϊόντα) παρόλο το sync
+
+Το Oxygen API μερικές φορές σερβίρει cached responses. Η extension τώρα στέλνει `cache: 'no-store'` στο fetch ώστε να bypass-άρει το Chrome HTTP cache, αλλά server-side caching ή Oxygen CDN μπορεί ακόμα να κρατάει παλιά data. Αν βλέπεις κατηγορία που έχεις διαγράψει:
+1. Ρυθμίσεις → SKU → **🔄 Ενημέρωση λίστας**
+2. Αν εξακολουθεί, είναι Oxygen server-side issue. Άνοιξε ticket στην Oxygen support.
+
+### Το "➕ Δημιουργία νέων" button εξαφανίζεται μετά από navigation
+
+Fix σε recent version: το content script πλέον παρακολουθεί `popstate` / `hashchange` / `pushState` / `replaceState` + έχει MutationObserver re-attach κάθε 30s. Αν ακόμα προκύψει, άνοιξε F12 → Console και στείλε τα `[oxygen-helper]` logs.
+
+### Το auto-badge εμφανίζεται σε Jira/Confluence/GitHub
+
+Fixed στην τρέχουσα έκδοση — domain denylist περιλαμβάνει τα κύρια SaaS tools. Αν βλέπεις ακόμα σε SaaS/docs site, πες μας το domain για να προσθέσουμε.
 
 ---
 
@@ -423,7 +464,9 @@ npm run preview:web        # serve του dist-web/
 
 # Verification
 npm run typecheck          # tsc --noEmit
+npm run test:parse-money   # 28 locale/decimal parsing + dimension extraction cases
 npm run test:scrape        # AADE invoice scraper fixture regression
+npm test                   # all of the above
 ```
 
 ### Deployment — Chrome Extension
@@ -503,37 +546,47 @@ npm run test:scrape
 
 ```
 src/
-├── shared/                  types, messages, constants, utils (extension + web)
+├── shared/                  types, messages, constants, utils (parseMoney, parseAreaFromName, buildCategoryTree)
 ├── core/
-│   └── storage/kv.ts        chrome.storage ↔ localStorage auto-detect
+│   ├── storage/kv.ts        chrome.storage ↔ localStorage auto-detect
+│   ├── config.ts            web-shell boot config (serverAuth flag)
+│   └── auto-sync.ts         throttled incremental sync on popup/page open
 ├── background/
 │   ├── handler.ts           pure message router (no chrome.* side-effects)
 │   ├── index.ts             SW lifecycle only (onInstalled, alarms, menus)
 │   ├── api/                 Oxygen REST client
-│   ├── search/              MiniSearch index
-│   ├── sku/                 SKU generation strategies
-│   ├── drafts/              drafts manager
-│   ├── sync/                bootstrap + incremental sync
+│   ├── search/              MiniSearch index (parallel local+remote, AND/OR with threshold)
+│   ├── sku/                 SKU generation strategies (variation-child aware)
+│   ├── drafts/              notices manager (a.k.a. "ειδοποιήσεις" in UI)
+│   ├── sync/                bootstrap + incremental sync (incl. variations)
 │   ├── agent/               Claude agent + tools + sessions
 │   │   └── client.ts        routes extension → api.anthropic.com, web → /api/anthropic/messages
-│   └── handlers/            flow-specific handlers
+│   └── handlers/            flow-specific handlers (flow1: create + update products)
 ├── content/                 content scripts (extension only)
+│   ├── product-detector.ts  auto-badge detection (JSON-LD, OG, microdata, heuristic) + domain denylist
 │   ├── scraper/             AADE invoice modal scraper
-│   └── overlays/            shadow-DOM overlays (lookup card, prefill modal)
+│   └── overlays/            shadow-DOM overlays (lookup card, auto-badge w/ details popover, prefill modal)
 ├── popup/                   popup UI (4 tabs — reused ως-έχει στο web)
-├── options/                 options page (6 sections — reused ως-έχει στο web)
+├── options/                 options page (5 sections — reused ως-έχει στο web)
 └── shells/
     └── web/                 web shell entry (index.html, main.ts, sw.ts, manifest)
 
 api/
-└── anthropic/messages.ts    Vercel edge function (key injection proxy)
+├── anthropic/messages.ts    Vercel edge function (Anthropic key injection proxy)
+├── oxygen/[...path].ts      Vercel edge function (Oxygen proxy, optional OXYGEN_API_TOKEN)
+└── config.ts                /api/config boot endpoint (tells client if serverAuth is on)
 
+middleware.ts                Vercel edge middleware (ACCESS_PWD basic-auth gate)
 manifest.json                Chrome MV3 manifest (extension-only)
 vite.config.ts               extension build config (crxjs plugin)
 vite.config.web.ts           web build config (separate root, sw.ts at /sw.js)
 vercel.json                  deploy config για Vercel
 .vercelignore                αποκλείει extension files από το deploy
 .github/workflows/           GitHub Actions για Chrome zip releases
+tests/
+├── parse-money.test.mjs     28 decimal + dimension parsing cases
+├── scrape.test.mjs          AADE invoice scraper regression
+└── fixtures/                static HTML fixtures
 ```
 
 Η πλήρης σχεδιαστική απόφαση για το split είναι στο [docs/web-app-plan.md](docs/web-app-plan.md).

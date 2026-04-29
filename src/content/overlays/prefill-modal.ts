@@ -10,7 +10,7 @@ import type {
   Variation,
   Warehouse,
 } from '@/shared/types'
-import { round2, parseAreaFromName } from '@/shared/util'
+import { round2, parseAreaFromName, buildCategoryTree } from '@/shared/util'
 import { mountShadowHost, unmountHost, injectStyles, h } from './shared'
 
 const HOST_ID = 'oxygen-helper-prefill-modal'
@@ -598,6 +598,8 @@ type LookupContext = {
     markup_percent: number
     /** Per-category override map (category_id → markup %). */
     category_markup_percents?: Record<Id, number>
+    /** Client-side category hierarchy (child_id → parent_id). */
+    category_parents?: Record<Id, Id>
   }
 }
 
@@ -656,6 +658,11 @@ type LineState = {
   salePrice: number
   saleTaxId?: Id
   saleDiscountPercent: number
+  // v6 product-level default discount (separate from per-line
+  // saleDiscountPercent above — this one is stored on the product itself
+  // and pre-fills future invoice lines automatically).
+  discountType: 'percent' | 'amount' | null
+  discountValue: number | null
   // myData
   mydataIncomeCategory: string
   mydataIncomeType: string
@@ -691,10 +698,19 @@ type LineState = {
 }
 
 // Best-guess enums sourced from the platform UI. Refine once API docs surface.
+// Per the Oxygen API spec (oxygen-api.json, POST /products.type):
+//   1 = product        (Προϊόν)
+//   2 = service        (Υπηρεσία)
+//   3 = merchandise    (Εμπόρευμα)
+// The previous mapping had these labels permuted (value 3 → "Προϊόν",
+// value 1 → "Υπηρεσία", value 2 → "Πάγιο"), which meant every product we
+// created went in under the wrong category in Oxygen's ledger. "Πάγιο"
+// (fixed asset) isn't in the documented enum at all, so it's removed —
+// add it back only if Oxygen exposes a 4th value in a future update.
 const PRODUCT_TYPES: Array<{ value: number; label: string }> = [
-  { value: 3, label: 'Προϊόν' },
-  { value: 1, label: 'Υπηρεσία' },
-  { value: 2, label: 'Πάγιο' },
+  { value: 1, label: 'Προϊόν' },
+  { value: 2, label: 'Υπηρεσία' },
+  { value: 3, label: 'Εμπόρευμα' },
 ]
 
 const MYDATA_INCOME_CATEGORIES: Array<{ value: string; label: string }> = [
@@ -813,6 +829,7 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
       default_measurement_unit_id: settings.default_measurement_unit_id,
       markup_percent: settings.markup_percent ?? 25,
       category_markup_percents: settings.category_markup_percents,
+      category_parents: settings.category_parents,
     },
   }
 
@@ -873,7 +890,17 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
       skuOffset,
     )
     if (willConsumeSku) skuOffset += 1
-    const unitId = resolveUnitId(ctx.units, line.unit_label) ?? ctx.defaults.default_measurement_unit_id
+    const matchedExisting = matchRes.status === 'exists' ? matchRes.product : undefined
+    // Unit-id resolution priority:
+    //   1. The already-persisted `measurement_unit_id` on the matched product
+    //      (most authoritative — pre-selects the dropdown without guessing).
+    //   2. String-match the scraped invoice unit_label against our cached
+    //      MeasurementUnit list (legacy path for new products).
+    //   3. User's default unit from Settings.
+    const unitId =
+      matchedExisting?.measurement_unit_id ??
+      resolveUnitId(ctx.units, line.unit_label) ??
+      ctx.defaults.default_measurement_unit_id
     // Billing side is frozen from the scrape. Warehouse defaults to same as
     // billing — the user can pivot it in the dropdown to trigger a convert.
     // Pre-parse dimensions from the name so (a) the SQM→PIECES conversion has
@@ -884,7 +911,7 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
     const metaWidth = parsedArea?.mm.width
     const metaLength = parsedArea?.mm.length
     const metaHeight = parsedArea?.mm.height
-    const matched = matchRes.status === 'exists' ? matchRes.product : undefined
+    const matched = matchedExisting
     // Default the update toggles ON for existing lines: the user just received
     // stock, so adding it and refreshing the price is almost always what they
     // want. They can uncheck either one per line.
@@ -923,6 +950,10 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
       salePrice,
       saleTaxId,
       saleDiscountPercent: 0,
+      // Pre-fill product-level discount from the matched product if it has
+      // one set; otherwise default to "no default discount".
+      discountType: matched?.discount_type ?? null,
+      discountValue: matched?.discount_value ?? null,
       // myData
       mydataIncomeCategory: 'category1_2',
       mydataIncomeType: 'E3_561_001',
@@ -978,12 +1009,12 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
     // rule (without `nullable`) then rejects null with "must be a string."
     // Leaving the key out bypasses the rule entirely.
     const baseFromState = (s: LineState): Record<string, unknown> => {
-      // The measurement-unit relation needs two fields on POST /products:
-      //   - measurement_unit_id: UUID of the unit (FK column)
-      //   - metric: abbreviation string ("ΤΜΧ", "KG", …) that the UI reads
-      //     back for display. Oxygen stores/returns both; sending only the
-      //     id makes the product come back with an empty metric cell, which
-      //     is what the user sees in the product page.
+      // Measurement unit on the product. Both fields are now first-class:
+      //   - measurement_unit_id: UUID of the unit, returned from the API
+      //     (lets edits pre-select the dropdown without a string-match
+      //     guess against `metric`).
+      //   - metric: abbreviation string ("ΤΜΧ", "KG", …). Still sent so
+      //     listings that only render the metric cell don't go blank.
       const unit = s.unitId ? ctx.units.find((u) => u.id === s.unitId) : undefined
       const base: Record<string, unknown> = {
         type: s.type,
@@ -998,6 +1029,12 @@ async function mountModal(modal: HTMLElement, invoice: ScrapedInvoice): Promise<
         sale_net_amount: s.salePrice,
         sale_tax_id: s.saleTaxId!,
         sale_discount_percent: s.saleDiscountPercent || 0,
+        // v6 product-level default discount. Sent only when both fields
+        // are set so we don't blow away an existing server value with a
+        // half-filled state.
+        ...(s.discountType && typeof s.discountValue === 'number'
+          ? { discount_type: s.discountType, discount_value: s.discountValue }
+          : {}),
         mydata_income_category: s.mydataIncomeCategory,
         mydata_income_type: s.mydataIncomeType,
         mydata_income_retail_category: s.mydataIncomeRetailCategory,
@@ -1650,7 +1687,21 @@ function buildLineCard(
       // <select> only gives first-letter jumping. The user asked for type-to-
       // filter here specifically.
       searchableSelectEl(
-        [{ value: '', label: 'Χωρίς κατηγορία' }, ...ctx.categories.map((c) => ({ value: c.id, label: c.name }))],
+        // Render the catalog as a tree using the local category_parents
+        // override. Depth gets surfaced as visual indent in the label so the
+        // dropdown matches the settings-page preview. Search still matches
+        // against the raw name (no indent chars) — see searchableSelectEl's
+        // implementation.
+        [
+          { value: '', label: 'Χωρίς κατηγορία' },
+          ...buildCategoryTree(
+            ctx.categories.map((c) => ({ id: c.id, name: c.name })),
+            ctx.defaults.category_parents,
+          ).map((n) => ({
+            value: n.id,
+            label: n.depth > 0 ? `${'  '.repeat(n.depth)}└ ${n.name}` : n.name,
+          })),
+        ],
         state.categoryId ?? '',
         'Αναζήτηση κατηγορίας…',
         (v) => {
@@ -1739,7 +1790,7 @@ function buildLineCard(
     labeled(
       'Πλάτος (mm)',
       inputEl(
-        { value: numOpt(state.metaWidth), type: 'number', step: '1', min: '0' },
+        { value: numOpt(state.metaWidth), type: 'number', step: 'any', min: '0' },
         (v) => (state.metaWidth = parseOptNum(v)),
       ),
     ),
@@ -1748,7 +1799,7 @@ function buildLineCard(
     labeled(
       'Μήκος (mm)',
       inputEl(
-        { value: numOpt(state.metaLength), type: 'number', step: '1', min: '0' },
+        { value: numOpt(state.metaLength), type: 'number', step: 'any', min: '0' },
         (v) => (state.metaLength = parseOptNum(v)),
       ),
     ),
@@ -1757,7 +1808,7 @@ function buildLineCard(
     labeled(
       'Ύψος / πάχος (mm)',
       inputEl(
-        { value: numOpt(state.metaHeight), type: 'number', step: '1', min: '0' },
+        { value: numOpt(state.metaHeight), type: 'number', step: 'any', min: '0' },
         (v) => (state.metaHeight = parseOptNum(v)),
       ),
     ),
@@ -1972,6 +2023,46 @@ function buildLineCard(
       inputEl(
         { value: String(state.saleDiscountPercent), type: 'number', step: '0.1', min: '0' },
         (v) => (state.saleDiscountPercent = Number(v)),
+      ),
+    ),
+  )
+
+  // v6 product-level default discount (carried on the product itself,
+  // pre-filled into future invoice/notice lines that reference it).
+  prices.appendChild(
+    labeled(
+      'Default έκπτωση (τύπος)',
+      selectEl(
+        [
+          { value: '', label: 'Καμία' },
+          { value: 'percent', label: 'Ποσοστό (%)' },
+          { value: 'amount', label: 'Ποσό (€)' },
+        ],
+        state.discountType ?? '',
+        (v) => {
+          state.discountType = v === 'percent' || v === 'amount' ? v : null
+          if (!state.discountType) state.discountValue = null
+        },
+      ),
+    ),
+  )
+  prices.appendChild(
+    labeled(
+      'Default έκπτωση (τιμή)',
+      inputEl(
+        {
+          value: state.discountValue !== null && state.discountValue !== undefined
+            ? String(state.discountValue)
+            : '',
+          type: 'number',
+          step: '0.01',
+          min: '0',
+          placeholder: state.discountType === 'amount' ? 'π.χ. 5.00' : 'π.χ. 10',
+        },
+        (v) => {
+          const trimmed = v.trim()
+          state.discountValue = trimmed === '' ? null : Number(trimmed)
+        },
       ),
     ),
   )

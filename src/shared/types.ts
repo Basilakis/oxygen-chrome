@@ -131,6 +131,17 @@ export interface Product {
   prices_include_vat?: boolean
   sale_discount_percent?: number
   measurement_unit_id?: Id
+  /**
+   * Per-product default discount that flows into invoice/notice lines.
+   * `discount_type` decides how `discount_value` is interpreted:
+   *   - "percent": 0–100 (% off net)
+   *   - "amount":  monetary value subtracted from net (in product currency)
+   * `discount_amount` is server-calculated for convenience — read-only on
+   * responses, never sent on POST/PUT.
+   */
+  discount_type?: 'percent' | 'amount' | null
+  discount_value?: number | null
+  discount_amount?: number | null
   // Variation children carry links back to the variation type + value.
   variations?: ProductVariationLink[]
 }
@@ -285,6 +296,13 @@ export interface Settings {
    * The user can still override per-line in the AADE prefill modal.
    */
   category_markup_percents?: Record<Id, number>
+  /**
+   * Client-side category hierarchy. The Oxygen public API stores categories
+   * flat (no parent_id exposed), but the user can model a tree locally here
+   * for a nicer indented dropdown in the product-creation flow. Keyed by
+   * child_id → parent_id. Categories not present in the map are roots.
+   */
+  category_parents?: Record<Id, Id>
   auto_link_suppliers: boolean
   auto_detect_products: boolean
   sync_interval_minutes: number
@@ -294,6 +312,24 @@ export interface Settings {
   anthropic_api_key?: string
   anthropic_model: string
   agent_enabled: boolean
+  // Materials Hub / MIVAA Price Monitoring (BYOK)
+  materials_hub_api_key?: string
+  /** ISO country code the price lookup targets — defaults to GR. */
+  materials_hub_country_code?: string
+  /**
+   * v3: when false, skip Firecrawl price verification on lookup/track calls.
+   * ~3× cheaper, ~30s faster, but prices come from LLM snippets only and
+   * may be stale. Default true (match the server default).
+   */
+  materials_hub_verify_prices?: boolean
+  // ---- v5 default price-alert preferences (applied to every new track) ----
+  materials_hub_alert_bell?: boolean
+  materials_hub_alert_email?: boolean
+  materials_hub_alert_webhook?: boolean
+  materials_hub_alert_on_price_drop?: boolean
+  materials_hub_alert_on_new_retailer?: boolean
+  materials_hub_alert_on_promo?: boolean
+  materials_hub_alert_webhook_url?: string
 }
 
 export const DEFAULT_SETTINGS: Settings = {

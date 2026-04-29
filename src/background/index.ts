@@ -5,6 +5,11 @@
  * shell too (without chrome.* at all).
  */
 
+// MUST be the first import — installs a `document` stub before any other
+// module evaluates, so Vite's modulepreload polyfill doesn't crash in the SW
+// context. See `sw-document-shim.ts` for the why.
+import '@/background/sw-document-shim'
+
 import type { Message } from '@/shared/messages'
 import {
   ALARM_INCREMENTAL_SYNC,

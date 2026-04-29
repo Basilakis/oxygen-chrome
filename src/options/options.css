@@ -224,6 +224,179 @@ label.field {
   color: var(--text-subtle);
 }
 
+/* Combined category editor — name | markup % | parent dropdown on one row.
+   Replaces the old separate markup+hierarchy sections so the settings page
+   stays compact. */
+.category-editor-section {
+  margin: 14px 0;
+}
+.category-editor-head {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 10px;
+  padding: 8px 8px 4px;
+  max-width: 640px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-subtle);
+}
+.category-editor-head .col-markup {
+  text-align: right;
+  padding-right: 24px;
+}
+.category-editor-list {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 6px 10px;
+  max-width: 640px;
+  align-items: center;
+  max-height: 420px;
+  overflow-y: auto;
+  padding: 6px 8px;
+  background: rgba(127, 127, 127, 0.04);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+}
+.category-editor-row {
+  display: contents;
+}
+.category-editor-markup-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.category-parent-select {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 4px 8px !important;
+  font-size: 12px;
+}
+
+/* ---------- Sync section ---------------------------------------- */
+
+/* Compact interval field: label on top, number+suffix inline, hint below.
+   Avoids the default full-width 520px stretch that made the minute input
+   look oversized for a 2-digit value. */
+.sync-interval-row {
+  margin: 14px 0 16px;
+}
+.sync-interval-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-subtle);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+/* Row that holds the interval control + the two sync trigger buttons. Wraps
+   on narrow widths so buttons drop to the next line instead of overflowing,
+   but defaults to a single horizontal line. */
+.sync-interval-inline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.sync-interval-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.sync-interval-input {
+  width: 90px !important;
+  max-width: 90px !important;
+  text-align: right;
+}
+.sync-interval-suffix {
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+.sync-interval-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.sync-status {
+  margin-top: 8px;
+}
+
+/* Timestamps — two-column key/value rows with subtle dividers. */
+.sync-status-timestamps {
+  background: rgba(127, 127, 127, 0.04);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 8px 12px;
+  max-width: 520px;
+  margin-bottom: 16px;
+}
+.sync-ts-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  font-size: 12px;
+}
+.sync-ts-row + .sync-ts-row {
+  border-top: 1px dashed var(--border-soft);
+}
+.sync-ts-label {
+  color: var(--text-subtle);
+}
+.sync-ts-value {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Counts: responsive grid of key/value cards, tabular aligned on the right. */
+.sync-counts-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sync-counts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px 10px;
+  max-width: 520px;
+}
+.sync-count-cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 10px;
+  font-size: 12px;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+.sync-count-label {
+  color: var(--text-subtle);
+}
+.sync-count-value {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.sync-error {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #c94a1c;
+  padding: 8px 12px;
+  background: rgba(201, 74, 28, 0.08);
+  border: 1px solid rgba(201, 74, 28, 0.25);
+  border-radius: 6px;
+  max-width: 520px;
+}
+
 label.field > span {
   display: block;
   font-size: 10px;
@@ -426,4 +599,198 @@ pre.log {
   font-family: ui-monospace, "SF Mono", "Cascadia Code", "Source Code Pro", Menlo, monospace;
   white-space: pre-wrap;
   border: 1px solid #1f2230;
+}
+
+/* ---------- Stale products ------------------------------------- */
+
+.stale-controls {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin: 12px 0 6px;
+}
+
+.stale-threshold-label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--text-muted);
+  gap: 4px;
+}
+
+.stale-threshold-input {
+  max-width: 120px;
+}
+
+.stale-summary {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 6px 0 10px;
+}
+
+.stale-table-wrap {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.stale-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.stale-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-muted);
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+}
+
+.stale-table tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+.stale-table tbody tr:hover {
+  background: var(--bg-page);
+}
+
+.stale-table td.num,
+.stale-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.stale-table input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.stale-progress {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  min-height: 18px;
+}
+
+/* ---------- Price monitoring dashboard ------------------------- */
+
+.pm-table-wrap {
+  margin-top: 8px;
+}
+
+.pm-table-scroll {
+  max-height: 440px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.pm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.pm-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-muted);
+  text-align: left;
+  padding: 8px 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.pm-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+.pm-table tbody tr:hover {
+  background: var(--bg-page);
+}
+
+.pm-name-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pm-query {
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 280px;
+}
+
+.pm-dims {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+.pm-col-name {
+  min-width: 180px;
+  max-width: 320px;
+}
+
+.pm-col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-col-ts {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pm-col-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pm-interval-input {
+  width: 58px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.pm-unit {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.pm-verify-chk {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.pm-btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
 }

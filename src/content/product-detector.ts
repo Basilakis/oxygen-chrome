@@ -23,7 +23,73 @@ export interface DetectedProduct {
   source: DetectionSource
 }
 
+/**
+ * Domains we never run product detection on — SaaS tools, dev platforms,
+ * mail, social, docs, etc. These pages often have exactly one visible <h1>
+ * (the ticket/article/document title) which used to trick the heuristic
+ * fallback into showing a "ΛΕΙΠΕΙ" badge on every Jira issue or Confluence
+ * page. Explicit deny-list is faster and more reliable than trying to
+ * out-guess every corporate CMS with signal-based heuristics.
+ */
+const DETECTOR_DOMAIN_DENYLIST = [
+  // Atlassian
+  /\.atlassian\.net$/i,
+  /\.atlassian\.com$/i,
+  /\.jira\.com$/i,
+  /confluence\./i,
+  // Dev platforms
+  /(^|\.)github\.com$/i,
+  /(^|\.)github\.io$/i,
+  /(^|\.)gitlab\.com$/i,
+  /(^|\.)bitbucket\.org$/i,
+  // Productivity / docs
+  /(^|\.)notion\.so$/i,
+  /(^|\.)linear\.app$/i,
+  /(^|\.)asana\.com$/i,
+  /(^|\.)trello\.com$/i,
+  /(^|\.)monday\.com$/i,
+  /(^|\.)clickup\.com$/i,
+  /(^|\.)airtable\.com$/i,
+  /(^|\.)figma\.com$/i,
+  /(^|\.)miro\.com$/i,
+  // Google workspace
+  /docs\.google\.com$/i,
+  /drive\.google\.com$/i,
+  /sheets\.google\.com$/i,
+  /calendar\.google\.com$/i,
+  /meet\.google\.com$/i,
+  /mail\.google\.com$/i,
+  // Microsoft / Office
+  /office\.com$/i,
+  /outlook\.(live|office|com)/i,
+  /sharepoint\.com$/i,
+  /teams\.microsoft\.com$/i,
+  // Communication
+  /(^|\.)slack\.com$/i,
+  /(^|\.)discord\.com$/i,
+  /(^|\.)zoom\.us$/i,
+  // Social / content
+  /(^|\.)twitter\.com$/i,
+  /(^|\.)x\.com$/i,
+  /(^|\.)facebook\.com$/i,
+  /(^|\.)instagram\.com$/i,
+  /(^|\.)linkedin\.com$/i,
+  /(^|\.)youtube\.com$/i,
+  /(^|\.)reddit\.com$/i,
+  /(^|\.)stackoverflow\.com$/i,
+  /(^|\.)stackexchange\.com$/i,
+  // Our own
+  /(^|\.)oxygen\.gr$/i,
+  /(^|\.)pelatologio\.gr$/i,
+]
+
+function isDenylisted(): boolean {
+  const host = window.location.hostname
+  return DETECTOR_DOMAIN_DENYLIST.some((rx) => rx.test(host))
+}
+
 export function detectProduct(): DetectedProduct | null {
+  if (isDenylisted()) return null
   const jsonld = detectJsonLd()
   if (jsonld) {
     console.debug('[oxygen-helper] product detected via JSON-LD:', jsonld)
@@ -208,13 +274,21 @@ function detectHeuristic(): DetectedProduct | null {
       return { title: text, source: 'heuristic' }
     }
   }
-  // Last resort: the page has exactly ONE visible h1 with reasonable length,
-  // AND there are signals this is a product page (URL pattern OR add-to-cart-style
-  // controls OR a price-shaped element near the h1).
+  // Last-resort heuristic — keep it conservative. Require a product-shaped
+  // URL AND at least one commerce-specific DOM signal (cart button or
+  // price-valued element). The previous "any of three" rule was too lax
+  // and fired on Jira/Confluence/generic `.html` pages that happen to have
+  // a single visible h1.
+  //
+  // Also excludes the generic `.html?$` URL fallback entirely — too many
+  // static sites end in .html without being product pages, and we'd rather
+  // miss a real product than misfire on a blog post.
   const path = window.location.pathname.toLowerCase()
-  const looksProductUrl =
-    /\/(?:product|products|p|prod|item|items|dp|shop|pdp|katalogos|προϊον)\b/.test(path) ||
-    /\.html?$/.test(path)
+  const looksProductUrl = /\/(?:product|products|prod|item|items|dp|pdp|katalogos|προϊον)\//.test(
+    path,
+  )
+  if (!looksProductUrl) return null
+
   const h1s = Array.from(document.querySelectorAll<HTMLElement>('h1')).filter(visible)
   if (h1s.length !== 1) return null
   const h1 = h1s[0]!
@@ -228,7 +302,7 @@ function detectHeuristic(): DetectedProduct | null {
     '[itemprop="price"], [class*="price" i] [class*="amount" i], .product-price, .pdp-price, .price-current, .price-now',
   )
 
-  if (!looksProductUrl && !hasCartSignal && !hasPriceSignal) return null
+  if (!hasCartSignal && !hasPriceSignal) return null
 
   return { title: text, source: 'heuristic' }
 }

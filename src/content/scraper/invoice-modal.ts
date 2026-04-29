@@ -69,38 +69,73 @@ function hasAnyColspan(row: HTMLTableRowElement): boolean {
 
 /* ---------------------------------------------------------------- anchors -- */
 
+// Any of these CSS matchers on an ancestor means "this is a dialog-like
+// wrapper and we should treat it as the modal root." Kept as a single source
+// of truth so the two anchors below stay in sync when we add new matchers.
+const MODAL_WRAPPER_SELECTOR = [
+  '[role="dialog"]',
+  '[aria-modal="true"]',
+  'dialog[open]',
+  '.modal',
+  '.k-window',
+  '.k-dialog',
+  '.k-widget.k-window',
+  '.k-window-content',
+  '.k-dialog-content',
+  '.k-content',
+  '.popup',
+  '.popBody',
+  '.popup-body',
+  '.modal-body',
+  '.modal-content',
+  '.dialog',
+  '.dialog-content',
+].join(', ')
+
+// Heading texts that mark the AADE invoice view. We match case-insensitively
+// and tolerate the word order changing, which has happened across Oxygen UI
+// updates ("Παραστατικό ΑΑΔΕ", "Προβολή παραστατικού ΑΑΔΕ", …).
+const MODAL_HEADING_PATTERNS: RegExp[] = [
+  /Προβολή\s+Παραστατικού/i,
+  /Παραστατικ[όοού].*ΑΑΔΕ/i,
+  /ΑΑΔΕ.*Παραστατικ[όοού]/i,
+]
+
+function matchesModalHeading(text: string): boolean {
+  const clean = text.trim()
+  if (!clean) return false
+  if (clean.includes(MODAL_HEADING_GREEK)) return true
+  return MODAL_HEADING_PATTERNS.some((rx) => rx.test(clean))
+}
+
 export function findModalRoot(): HTMLElement | null {
-  // 1. Heading-based anchor — but climb up until the ancestor ALSO contains the
-  //    line-items table (or looks like a dialog). Otherwise a header-only wrapper
-  //    like <div class="popHeader"> would be returned and scraping fails.
+  // 1. Heading-based anchor — walk up from any heading whose text looks like
+  //    the AADE invoice modal title, until we hit a dialog-shaped ancestor
+  //    (or one that contains the line-items table). A header-only wrapper
+  //    like `<div class="popHeader">` alone won't do — the scraper needs
+  //    the full dialog with the table inside.
   const headings = document.querySelectorAll(
-    'h1, h2, h3, h4, h5, h6, .modal-title, .k-window-title',
+    'h1, h2, h3, h4, h5, h6, .modal-title, .k-window-title, .k-window-titlebar, .popHeader, [class*="title"]',
   )
   for (const node of headings) {
-    const text = (node.textContent ?? '').trim()
-    if (!text) continue
-    if (!text.includes(MODAL_HEADING_GREEK) && !/Προβολή\s+Παραστατικού/i.test(text)) continue
+    if (!matchesModalHeading(node.textContent ?? '')) continue
     let el: HTMLElement | null = node as HTMLElement
     while (el) {
-      if (el.matches('[role="dialog"], .modal, .k-window, .k-dialog, .popup, .popBody, .popup-body, .modal-body')) {
-        return el
-      }
+      if (el.matches(MODAL_WRAPPER_SELECTOR)) return el
       if (el.querySelector('table.tableThinOpen')) return el
       el = el.parentElement
     }
   }
-  // 2. Distinctive table fallback — find the Oxygen line-items table anywhere on the
-  //    page and walk up to its enclosing dialog/modal wrapper.
+  // 2. Distinctive table fallback — the Oxygen line-items table has a very
+  //    specific class. If we see one anywhere on the page, climb to its
+  //    dialog wrapper. Catches cases where the heading markup changed.
   const table = document.querySelector('table.tableThinOpen')
   if (table) {
     let el: HTMLElement | null = table as HTMLElement
     while (el) {
-      if (el.matches('[role="dialog"], .modal, .k-window, .k-dialog, .popup, .popBody, .popup-body, .modal-body')) {
-        return el
-      }
+      if (el.matches(MODAL_WRAPPER_SELECTOR)) return el
       el = el.parentElement
     }
-    // Last resort: closest generic div
     const d = table.closest('div')
     if (d instanceof HTMLElement) return d
   }

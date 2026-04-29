@@ -88,6 +88,7 @@ export type Message =
   | { type: 'search/catalog/local'; query: string; limit?: number }
   | { type: 'search/catalog/remote'; query: string; limit?: number }
   | { type: 'catalog/get-product'; id: Id }
+  | { type: 'catalog/list-all' }
   | { type: 'lookups/get-taxes' }
   | { type: 'lookups/get-warehouses' }
   | { type: 'lookups/get-categories' }
@@ -141,6 +142,100 @@ export type Message =
       }>
     }
   | { type: 'flow1/scrape-detected'; invoice: ScrapedInvoice }
+  | { type: 'products/bulk-deactivate'; ids: Id[] }
+  | {
+      /**
+       * Look up the current Materials-Hub price-tracking state for a product.
+       * If a local mapping exists we hit GET /prices/track/{id}. Otherwise,
+       * if `search_query` is supplied, we consult the remote list endpoint
+       * and try to recover an orphaned mapping by matching the query — this
+       * heals the case where a previous session tracked the product under a
+       * different local key (old code path, cleared storage, new device).
+       */
+      type: 'prices/status-for-product'
+      product_key: string
+      search_query?: string
+    }
+  | {
+      /**
+       * Registers a product with Materials Hub and returns the first set of
+       * results in the same response. The mapping product_key → tracking_id
+       * is persisted locally so subsequent `status-for-product` calls reuse
+       * the same tracking row instead of re-registering.
+       */
+      type: 'prices/start-tracking'
+      product_key: string
+      search_query: string
+      dimensions?: string
+      country_code?: string
+      refresh_interval_hours?: number
+    }
+  | {
+      /** Force a fresh price refresh for the tracking row mapped to this product. */
+      type: 'prices/refresh-for-product'
+      product_key: string
+    }
+  | {
+      /**
+       * Stop tracking a product (DELETE /prices/track/{id}) and drop the
+       * local mapping so the UI reverts to "not tracked" state.
+       */
+      type: 'prices/stop-for-product'
+      product_key: string
+    }
+  | { type: 'prices/test-connection' }
+  | {
+      /**
+       * Translate a short English UI string to Greek via the configured
+       * Anthropic model. Cached per source-text in chrome.storage.local so
+       * repeated views (same summary after a refresh) don't re-hit the API.
+       * Safe no-op when no API key is configured — returns the input verbatim.
+       */
+      type: 'translate/to-greek'
+      text: string
+    }
+  | { type: 'prices/exclusions/get'; product_key: string }
+  | { type: 'prices/exclusions/add'; product_key: string; hostname: string }
+  | { type: 'prices/exclusions/remove'; product_key: string; hostname: string }
+  | { type: 'prices/exclusions/clear'; product_key: string }
+  | {
+      /**
+       * v6: re-run Firecrawl-only verification on a tracked product. Either
+       * targets specific rows by URL or the whole latest run. Much cheaper
+       * than `prices/refresh-for-product` since it skips discovery.
+       */
+      type: 'prices/verify-for-product'
+      product_key: string
+      urls?: string[]
+    }
+  | {
+      /** Full price history for a tracked product. Keyed by our local product_key. */
+      type: 'prices/history-for-product'
+      product_key: string
+    }
+  | { type: 'prices/list-tracked' }
+  | { type: 'prices/refresh-by-id'; tracking_id: string }
+  | { type: 'prices/stop-by-id'; tracking_id: string }
+  | {
+      type: 'prices/update-by-id'
+      tracking_id: string
+      patch: {
+        refresh_interval_hours?: number
+        country_code?: string
+        verify_prices?: boolean
+      }
+    }
+  | {
+      /**
+       * Fire a single no-tracking price lookup — used from the auto-badge
+       * popover where the user just wants the current lowest market price
+       * without committing to a tracking row.
+       */
+      type: 'prices/lookup-quick'
+      search_query: string
+      dimensions?: string
+      country_code?: string
+    }
   | { type: 'drafts/list' }
   | { type: 'drafts/get'; id: string }
   | { type: 'drafts/get-active' }

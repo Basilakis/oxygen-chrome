@@ -64,7 +64,26 @@
       "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); console.log\\('Found', list.length, 'products:'\\); list.forEach\\(p=>console.log\\(' -', p.code, '|', p.name, '| group:', p.group, '| variations:', JSON.stringify\\(p.variations?.slice\\(0,2\\)\\)\\)\\)}\\)\")",
       "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); console.log\\('Full group object for first hit:'\\); console.log\\(JSON.stringify\\(list[0]?.group, null, 2\\)\\); console.log\\('---'\\); console.log\\('Full variations:'\\); console.log\\(JSON.stringify\\(list[0]?.variations, null, 2\\)\\); console.log\\('---'\\); console.log\\('code:', list[0]?.code\\); console.log\\('id:', list[0]?.id\\); }\\)\")",
       "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); const hit = list.find\\(p=>p.code==='6.1'\\) || list[0]; console.log\\('Product:', hit.code, hit.name\\); console.log\\('id:', hit.id\\); console.log\\('group:'\\); console.log\\(JSON.stringify\\(hit.group, null, 2\\)\\); console.log\\('---'\\); console.log\\('variations:', JSON.stringify\\(hit.variations, null, 2\\)\\)}\\)\")",
-      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); console.log\\('group:', JSON.stringify\\(o.group\\)\\)}\\)\")"
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); console.log\\('group:', JSON.stringify\\(o.group\\)\\)}\\)\")",
+      "Bash(node -e \"let d=''; process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>{const o=JSON.parse\\(d\\); const list=Array.isArray\\(o\\)?o:\\(o.data||[]\\); const p=list[0]; if\\(!p\\){console.log\\('no hit'\\); return} console.log\\('--- LIST endpoint response ---'\\); console.log\\('code:', p.code\\); console.log\\('name:', p.name\\); console.log\\('purchase_net_amount:', p.purchase_net_amount\\); console.log\\('sale_net_amount:', p.sale_net_amount\\); console.log\\('quantity:', p.quantity\\); console.log\\('warehouses:', JSON.stringify\\(p.warehouses\\)\\); console.log\\('metric:', JSON.stringify\\(p.metric\\)\\);}\\)\")",
+      "Bash(grep -E \"\\\\.\\(css|ts|tsx\\)$\")",
+      "Bash(awk 'NR>=563 && NR<=1912 {print NR\": \"$0; if \\(NR==563||NR==1912\\) print \"---\"}' src/content/oxygen-app.ts)",
+      "Bash(awk 'NR>=1910 && NR<=1913 {print NR\": \"$0}' src/content/oxygen-app.ts)",
+      "Bash(awk 'NR<563 || NR>1912' src/content/oxygen-app.ts)",
+      "Bash(mv /tmp/oxa.tmp src/content/oxygen-app.ts)",
+      "Bash(awk 'NR<417' src/popup/tabs/search.ts)",
+      "Bash(mv /tmp/search.tmp src/popup/tabs/search.ts)",
+      "Bash(curl -s -m 10 -o /tmp/oxa.html -w \"%{http_code} %{content_type}\\\\n\" https://api.oxygen.gr/docs)",
+      "Bash(curl -s -m 10 -o /tmp/oxa-yaml.txt -w \"%{http_code} %{content_type}\\\\n\" https://api.oxygen.gr/api-docs)",
+      "Bash(curl -s -m 10 -o /tmp/oxa-spec.json -w \"%{http_code} %{content_type}\\\\n\" https://api.oxygen.gr/v1/openapi.json)",
+      "Bash(curl -s -m 10 -o /tmp/oxa-spec2.json -w \"%{http_code} %{content_type}\\\\n\" https://api.oxygen.gr/openapi.json)",
+      "Bash(curl -sL -m 10 -o /tmp/oxd.html -w \"%{http_code} %{url_effective}\\\\n\" https://docs.oxygen.gr/)",
+      "Bash(curl -sL -m 10 -o /tmp/oxd2.html -w \"%{http_code} %{url_effective}\\\\n\" https://oxygen.gr/api)",
+      "Bash(curl -sL -m 10 -o /tmp/sl.json -w \"%{http_code} %{url_effective}\\\\n\" \"https://stoplight.io/api/v1/projects/oxygengr/api-docs/nodes/openapi.json\")",
+      "Bash(curl -sL -m 10 -o /tmp/init.js -w \"%{http_code}\\\\n\" https://docs.oxygen.gr/swagger-initializer.js)",
+      "Bash(curl -sL -m 30 -o tmp-api/oxygen-api.json -w \"HTTP %{http_code} · %{size_download} bytes\\\\n\" https://docs.oxygen.gr/oxygen-api.json)",
+      "Bash(awk 'NR<1305 || NR>1394' src/shared/ui/price-monitoring.ts)",
+      "Bash(mv /tmp/pm.tmp src/shared/ui/price-monitoring.ts)"
     ]
   }
 }

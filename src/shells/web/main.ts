@@ -26,10 +26,10 @@ import { renderStatusTab } from '@/popup/tabs/status'
 
 import { renderAuth } from '@/options/sections/auth'
 import { renderSync } from '@/options/sections/sync'
-import { renderDefaults } from '@/options/sections/defaults'
 import { renderSkuPricing } from '@/options/sections/sku-pricing'
 import { renderBehavior } from '@/options/sections/behavior'
 import { renderAi } from '@/options/sections/ai'
+import { renderPriceMonitoring } from '@/options/sections/price-monitoring'
 import { renderDiagnostics } from '@/options/sections/diagnostics'
 
 // Route every sendMessage() call to the in-process handler. No chrome.runtime
@@ -50,12 +50,12 @@ async function renderSettingsTab(root: HTMLElement): Promise<void> {
   // Stacked vertical sections — same renderers as the extension options page.
   root.innerHTML = ''
   const sections: Array<{ title: string; render: (el: HTMLElement) => Promise<void> | void }> = [
-    { title: 'Πιστοποίηση', render: renderAuth },
+    { title: 'OXYGEN API', render: renderAuth },
     { title: 'Συγχρονισμός', render: renderSync },
-    { title: 'Προεπιλογές', render: renderDefaults },
     { title: 'SKU & τιμολόγηση', render: renderSkuPricing },
     { title: 'Συμπεριφορά', render: renderBehavior },
     { title: 'Βοηθός AI', render: renderAi },
+    { title: 'Παρακολούθηση τιμών', render: renderPriceMonitoring },
     { title: 'Διαγνωστικά', render: renderDiagnostics },
   ]
   for (const s of sections) {

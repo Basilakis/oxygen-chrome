@@ -21,6 +21,7 @@
   "host_permissions": [
     "https://*.oxygen.gr/*",
     "https://api.anthropic.com/*",
+    "https://v1api.materialshub.gr/*",
     "<all_urls>"
   ],
   "background": {

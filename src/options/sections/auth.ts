@@ -3,7 +3,7 @@ import type { AuthStatus } from '@/shared/messages'
 import { getRuntimeConfig } from '@/core/config'
 
 export async function renderAuth(root: HTMLElement, refresh?: () => void): Promise<void> {
-  root.innerHTML = '<h2>Πιστοποίηση</h2>'
+  root.innerHTML = '<h2>OXYGEN API</h2>'
 
   const settingsRes = await sendMessage({ type: 'settings/get' })
   const settings = (settingsRes as { ok: true; settings: { base_url: string; mode: 'sandbox' | 'production'; token?: string } }).settings

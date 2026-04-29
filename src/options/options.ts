@@ -2,10 +2,11 @@ import { sendMessage } from '@/shared/messages'
 import type { AuthStatus, SyncStatus } from '@/shared/messages'
 import { renderAuth } from './sections/auth'
 import { renderSync } from './sections/sync'
-import { renderDefaults } from './sections/defaults'
 import { renderSkuPricing } from './sections/sku-pricing'
 import { renderBehavior } from './sections/behavior'
 import { renderAi } from './sections/ai'
+import { renderPriceMonitoring } from './sections/price-monitoring'
+import { renderStaleProducts } from './sections/stale-products'
 import { renderDiagnostics } from './sections/diagnostics'
 
 function renderLocked(root: HTMLElement, title: string, message: string): void {
@@ -32,9 +33,10 @@ async function mount(): Promise<void> {
 
   const authEl = document.getElementById('section-auth')
   const syncEl = document.getElementById('section-sync')
-  const defaultsEl = document.getElementById('section-defaults')
   const skuEl = document.getElementById('section-sku')
   const behaviorEl = document.getElementById('section-behavior')
+  const priceEl = document.getElementById('section-price-monitoring')
+  const staleEl = document.getElementById('section-stale')
   const diagEl = document.getElementById('section-diagnostics')
 
   const refresh = () => {
@@ -58,14 +60,19 @@ async function mount(): Promise<void> {
   const aiEl = document.getElementById('section-ai')
 
   const gated: Array<{ el: HTMLElement | null; title: string; render: (el: HTMLElement) => Promise<void> }> = [
-    { el: defaultsEl, title: 'Προεπιλογές', render: renderDefaults },
     { el: skuEl, title: 'SKU & τιμολόγηση', render: renderSkuPricing },
     { el: behaviorEl, title: 'Συμπεριφορά', render: renderBehavior },
+    { el: staleEl, title: 'Παλιά προϊόντα σε απόθεμα', render: renderStaleProducts },
   ]
 
   // AI section is NOT gated — user should be able to paste their Anthropic key
   // independently of the Oxygen auth/sync state.
   if (aiEl) await renderAi(aiEl)
+
+  // Price-monitoring dashboard is ALSO not gated on Oxygen auth — it only
+  // needs the Materials Hub API key (checked inside the renderer), not
+  // Oxygen credentials.
+  if (priceEl) await renderPriceMonitoring(priceEl)
 
   for (const { el, title, render } of gated) {
     if (!el) continue

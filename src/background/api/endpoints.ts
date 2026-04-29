@@ -241,6 +241,19 @@ export function normalizeProduct(raw: unknown): Product {
     mpn_isbn: (r.mpn_isbn as string | null | undefined) ?? null,
     part_number: (r.part_number as string | null | undefined) ?? null,
     metric: str(r.metric),
+    // v6: measurement_unit_id is the canonical relation now. `metric` is no
+    // longer documented on ProductItem but is still echoed in responses
+    // for backwards compatibility — we read both, but display logic should
+    // prefer the abbreviation looked up via measurement_unit_id (more
+    // robust against the API dropping `metric` later).
+    measurement_unit_id: r.measurement_unit_id ? toId(r.measurement_unit_id) : undefined,
+    // v6: optional product-level default discount.
+    discount_type:
+      r.discount_type === 'percent' || r.discount_type === 'amount'
+        ? r.discount_type
+        : null,
+    discount_value: toNum(r.discount_value) ?? null,
+    discount_amount: toNum(r.discount_amount) ?? null,
     quantity: toNum(r.quantity),
     warehouses,
     sale_net_amount: toNum(r.sale_net_amount),

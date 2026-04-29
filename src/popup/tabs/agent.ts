@@ -1,7 +1,7 @@
 import { sendMessage } from '@/shared/messages'
 import type { ScrapedInvoice } from '@/shared/messages'
 import type { Product, Settings } from '@/shared/types'
-import { formatMoney, asArray, sumStock } from '@/shared/util'
+import { formatMoney, asArray, productStock } from '@/shared/util'
 import * as PrefillModal from '@/content/overlays/prefill-modal'
 
 /**
@@ -567,7 +567,7 @@ async function runLocalCommand(line: string): Promise<string> {
         `Τιμή πώλησης: ${formatMoney(found.sale_net_amount ?? 0)}`,
         `ΦΠΑ πώλησης: ${found.sale_vat_ratio ?? '—'}%`,
         `Μονάδα: ${found.metric ?? '—'}`,
-        `Συνολικό απόθεμα: ${sumStock(found.warehouses)}`,
+        `Συνολικό απόθεμα: ${productStock(found)}`,
       ].join('\n')
     }
     case '/stock': {

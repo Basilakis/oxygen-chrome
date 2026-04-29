@@ -123,9 +123,12 @@ function buildAutoNext(products: Product[], args: SuggestArgs, offset: number): 
   const rx = new RegExp(patStr)
   let max = 0
   for (const p of products) {
-    const code = p.code
-    if (!code || code.includes('.')) continue
-    const m = code.match(rx)
+    if (!p.code) continue
+    // Collapse children to their parent before matching, so `6.1` is treated
+    // like `6` and raises max, preventing the next-SKU suggestion from
+    // colliding with an already-reserved variation parent.
+    const base = baseSkuCode(p.code)
+    const m = base.match(rx)
     if (m) {
       const n = parseInt(m[1]!, 10)
       if (Number.isFinite(n) && n > max) max = n
@@ -241,9 +244,10 @@ function nextNumeric(products: Product[], prefix: string, offset = 0): string {
   const rx = prefix ? new RegExp(`^${escapeRx(prefix)}(\\d+)$`) : /^(\d+)$/
   let max = 0
   for (const p of products) {
-    const code = p.code
-    if (!code || code.includes('.')) continue
-    const m = code.match(rx)
+    if (!p.code) continue
+    // Treat `6.1` like `6` for max-seq purposes — the parent is reserved.
+    const base = baseSkuCode(p.code)
+    const m = base.match(rx)
     if (m) {
       const n = parseInt(m[1]!, 10)
       if (Number.isFinite(n) && n > max) max = n
@@ -261,9 +265,9 @@ function nextPrefixed(products: Product[], prefix: string, padding: number, offs
   const rx = new RegExp(pattern)
   let max = 0
   for (const p of products) {
-    const code = p.code
-    if (!code || code.includes('.')) continue
-    const m = code.match(rx)
+    if (!p.code) continue
+    const base = baseSkuCode(p.code)
+    const m = base.match(rx)
     if (m) {
       const n = parseInt(m[1]!, 10)
       if (Number.isFinite(n) && n > max) max = n
@@ -286,9 +290,9 @@ function nextCategory(
   const rx = new RegExp(`^${escapeRx(head)}-(\\d+)$`)
   let max = 0
   for (const p of products) {
-    const code = p.code
-    if (!code || code.includes('.')) continue
-    const m = code.match(rx)
+    if (!p.code) continue
+    const base = baseSkuCode(p.code)
+    const m = base.match(rx)
     if (m) {
       const n = parseInt(m[1]!, 10)
       if (Number.isFinite(n) && n > max) max = n
@@ -300,6 +304,20 @@ function nextCategory(
 }
 
 /* --------------------------------------------------------------- utils -- */
+
+/**
+ * Extract the base portion of a code that contributes to the max-seq count.
+ * Variation children follow `{parent}.{index}` (`"6.1"`, `"6.2"`), so the
+ * parent "6" is implicitly reserved the moment any child exists. If we
+ * ignored children entirely when computing max, the next-SKU suggestion
+ * would collide with that reserved parent.
+ *
+ * Inputs: `"6"` → `"6"`, `"6.1"` → `"6"`, `"OX-001.2"` → `"OX-001"`.
+ */
+function baseSkuCode(code: string): string {
+  const dot = code.indexOf('.')
+  return dot >= 0 ? code.slice(0, dot) : code
+}
 
 function slugify(s: string): string {
   return s

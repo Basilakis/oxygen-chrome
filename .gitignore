@@ -13,3 +13,6 @@ dist-web/
 
 # Claude Code local state (session transcripts may contain pasted secrets)
 .claude/
+
+# Scratch — downloaded OpenAPI spec for debugging, don't commit
+tmp-api/

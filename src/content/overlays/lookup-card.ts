@@ -1,6 +1,6 @@
 import { sendMessage } from '@/shared/messages'
 import type { SearchResults, CatalogSearchHit, DOMRectLike } from '@/shared/messages'
-import { formatMoney, sumStock } from '@/shared/util'
+import { formatMoney, productStock } from '@/shared/util'
 import { mountShadowHost, unmountHost, injectStyles, h } from './shared'
 
 const HOST_ID = 'oxygen-helper-lookup-card'
@@ -240,7 +240,7 @@ function renderResults(container: HTMLElement, results: SearchResults): void {
 
 function renderHit(hit: CatalogSearchHit): HTMLElement {
   const p = hit.product
-  const totalStock = sumStock(p.warehouses)
+  const totalStock = productStock(p)
   const box = h('div', { class: 'hit' })
   box.appendChild(
     h(

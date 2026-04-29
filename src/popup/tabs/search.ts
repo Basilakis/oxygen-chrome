@@ -1,6 +1,20 @@
 import { sendMessage } from '@/shared/messages'
 import type { SearchResults } from '@/shared/messages'
-import { formatMoney, debounce, sumStock } from '@/shared/util'
+import { formatMoney, debounce, parseAreaFromName, productStock } from '@/shared/util'
+import {
+  buildPriceMonitoringSearchQuery,
+  renderPriceMonitoringInto,
+  type PriceMonitoringContext,
+} from '@/shared/ui/price-monitoring'
+
+/**
+ * True when we're running inside the Chrome extension runtime (popup or
+ * options page). False on the Vercel web app — where `chrome.runtime?.id` is
+ * absent. Used to gate UI affordances that should only appear on one shell.
+ */
+function isExtensionShell(): boolean {
+  return typeof chrome !== 'undefined' && !!chrome.runtime?.id
+}
 
 export function renderSearchTab(root: HTMLElement): void {
   root.innerHTML = ''
@@ -293,7 +307,7 @@ function renderHit(p: SearchResults['exact'][number]['product']): HTMLElement {
   top.appendChild(code)
   box.appendChild(top)
 
-  const stock = sumStock(p.warehouses)
+  const stock = productStock(p)
   const meta = document.createElement('div')
   meta.className = 'meta'
   meta.textContent = `αγορά ${formatMoney(p.purchase_net_amount ?? 0)} · πώληση ${formatMoney(p.sale_net_amount ?? 0)} · απόθεμα ${stock}`
@@ -328,6 +342,75 @@ function renderHit(p: SearchResults['exact'][number]['product']): HTMLElement {
     addBtn.disabled = true
   })
   row.appendChild(addBtn)
+
+  // Price-monitoring trigger — web app only. The same feature lives in the
+  // Oxygen product modal's Κέρδος tab on the extension side. Both shells now
+  // share `renderPriceMonitoringInto` so the UI (tables, chart, badges,
+  // favicons, summary translation) is identical — only the trigger surface
+  // differs.
+  if (!isExtensionShell()) {
+    const priceBtn = document.createElement('button')
+    priceBtn.className = 'btn'
+    priceBtn.textContent = '🔎 Price monitoring'
+    priceBtn.title = 'Παρακολούθηση τιμών αγοράς και ιστορικό'
+    row.appendChild(priceBtn)
+
+    const panel = document.createElement('div')
+    panel.style.marginTop = '10px'
+    panel.style.padding = '10px'
+    panel.style.background = 'var(--bg-page, #f5f6fa)'
+    panel.style.borderRadius = '6px'
+    panel.style.display = 'none'
+
+    priceBtn.addEventListener('click', () => {
+      const isOpen = panel.style.display !== 'none'
+      if (isOpen) {
+        panel.style.display = 'none'
+        priceBtn.textContent = '🔎 Price monitoring'
+        return
+      }
+      panel.style.display = 'block'
+      priceBtn.textContent = '✕ Κλείσιμο'
+      const ctx = buildContextFromProduct(p)
+      void renderPriceMonitoringInto(panel, ctx)
+    })
+
+    box.appendChild(row)
+    box.appendChild(panel)
+    return box
+  }
+
   box.appendChild(row)
   return box
 }
+
+/**
+ * Translate a search-hit Product (from local catalog or Oxygen API) into the
+ * shared `PriceMonitoringContext` shape. Mirrors the Oxygen-modal extraction
+ * exactly so a product tracked from one shell shows up correctly in the other.
+ */
+function buildContextFromProduct(p: SearchResults['exact'][number]['product']): PriceMonitoringContext {
+  const name = (p.name ?? '').trim()
+  const code = (p.code ?? '').trim()
+  const parsed = parseAreaFromName(name)
+  const dimensions = parsed?.source
+  const category = (p.category_name ?? '').trim() || undefined
+  const purchaseNet =
+    typeof p.purchase_net_amount === 'number'
+      ? p.purchase_net_amount
+      : parseFloat(String(p.purchase_net_amount ?? '')) || undefined
+  const saleNet =
+    typeof p.sale_net_amount === 'number'
+      ? p.sale_net_amount
+      : parseFloat(String(p.sale_net_amount ?? '')) || undefined
+  const productKey = code ? `code:${code}` : `name:${name}`
+  return {
+    productKey,
+    productName: name,
+    dimensions,
+    purchaseNet,
+    saleNet,
+    searchQuery: buildPriceMonitoringSearchQuery(name, dimensions, category, code),
+  }
+}
+

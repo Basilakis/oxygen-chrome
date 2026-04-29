@@ -38,6 +38,25 @@ function normalizeTerm(term: string): string {
     .toLowerCase()
 }
 
+// Mirror MiniSearch's default tokenizer: split on whitespace and non-word runs,
+// then normalize each token the same way the index does. Used by the OR
+// fallback filter to count EXACT token overlap without trusting MiniSearch's
+// fuzzy-inflated `match.keys` count.
+function normalizeForTokens(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
+function productTokenSet(p: Product): Set<string> {
+  const parts: string[] = []
+  for (const f of FIELDS) {
+    const v = (p as unknown as Record<string, unknown>)[f]
+    if (v != null) parts.push(String(v))
+  }
+  const joined = normalizeForTokens(parts.join(' '))
+  const tokens = joined.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+  return new Set(tokens)
+}
+
 function makeIndex(): MiniSearch<Product> {
   return new MiniSearch<Product>({
     fields: [...FIELDS],
@@ -155,7 +174,58 @@ export async function searchLocal(query: string, limit = 20): Promise<SearchResu
   }
 
   const index = await ensureReady()
-  const raw = index.search(q, { prefix: true, fuzzy: 0.4, combineWith: 'AND' })
+  // Two-pass search:
+  //   1. AND — every token in the query must match (precise). Good for
+  //      user-typed searches where the query is tight ("ferrara beige").
+  //   2. OR fallback — when AND returns nothing, run again with OR so we
+  //      can still match short catalog entries against a long noisy query.
+  //      Then filter out low-coverage matches: e.g. a "ΠΑΓΚΟΣ EGGER F234"
+  //      entry shouldn't win the page for "ΠΑΓΚΟΣ EGGER H3331 ST10…" just
+  //      because it shares the brand words. We require a minimum share of
+  //      query tokens to actually match before a candidate is kept.
+  let raw = index.search(q, { prefix: true, fuzzy: 0.4, combineWith: 'AND' })
+  if (raw.length === 0) {
+    const orRaw = index.search(q, { prefix: true, fuzzy: 0.4, combineWith: 'OR' })
+    // MiniSearch's `match.length` inflates when fuzzy matches overlap —
+    // e.g. query "ST10" fuzzy-matches "ST76" and "ST9" (edit distance 2
+    // under fuzzy=0.4), so three unrelated "ΠΑΓΚΟΣ EGGER ..." products all
+    // end up with 3 "matched" terms from the same brand+series overlap
+    // even though only one shares the exact model number.
+    //
+    // Count EXACT token matches ourselves against a per-document token set
+    // so the threshold filter drops noise and keeps genuine hits. Fuzzy
+    // still contributes candidates; we just don't let it confuse the
+    // ranking.
+    const queryExactTokens = normalizeForTokens(q).split(/\s+/).filter(Boolean)
+    const annotated = orRaw.map((r) => {
+      const product = r as unknown as Product
+      const docTokens = productTokenSet(product)
+      const exact = queryExactTokens.filter((qt) => docTokens.has(qt)).length
+      return { r, matched: exact }
+    })
+    const topMatch = annotated.reduce((m, x) => Math.max(m, x.matched), 0)
+    // Drop hits that match fewer than (topMatch - 1) exact tokens, min 2.
+    // Keeps close contenders while filtering out brand-only noise.
+    const minMatched = Math.max(2, topMatch - 1)
+    console.log('[oxygen-helper:search] OR fallback threshold filter', {
+      query: q,
+      queryTokens: queryExactTokens.length,
+      rawHitCount: orRaw.length,
+      topMatch,
+      minMatched,
+      hits: annotated.slice(0, 10).map((x) => ({
+        code: (x.r as unknown as Product).code,
+        name: ((x.r as unknown as Product).name ?? '').slice(0, 60),
+        exactMatched: x.matched,
+        score: x.r.score,
+        passes: x.matched >= minMatched,
+      })),
+    })
+    raw = annotated
+      .filter((x) => x.matched >= minMatched)
+      .sort((a, b) => b.matched - a.matched || b.r.score - a.r.score)
+      .map((x) => x.r)
+  }
   const exactIds = new Set(exactHits.map((h) => h.product.id))
 
   const fuzzyHits: CatalogSearchHit[] = []
