@@ -82,6 +82,19 @@ import {
 import { runAgentTurn, testConnection as testAgentConnection } from '@/background/agent'
 import { translateToGreek } from '@/background/translation'
 import {
+  deleteSubject as mmDeleteSubject,
+  getSubject as mmGetSubject,
+  getSubjectFeed as mmGetSubjectFeed,
+  getSubjectSummary as mmGetSubjectSummary,
+  refreshSubject as mmRefreshSubject,
+  trackSubject as mmTrackSubject,
+} from '@/background/api/mention-monitoring'
+import {
+  clearMentionTrackingId,
+  getMentionTrackingId,
+  setMentionTrackingId,
+} from '@/background/storage/mention-tracking'
+import {
   listSessions as agentListSessions,
   getSession as agentGetSession,
   saveSession as agentSaveSession,
@@ -510,6 +523,86 @@ export async function handle(message: Message): Promise<MessageResponse> {
           )
         }
         return { ok: true } as MessageResponse
+      } catch (err) {
+        return { ok: false, error: String((err as Error)?.message ?? err) }
+      }
+    }
+    // ---- Mention Monitoring (subject-scoped, same UX as Price Monitoring) ----
+    case 'mentions/status-for-product': {
+      const id = await getMentionTrackingId(message.product_key)
+      if (!id) return { ok: true, tracked: false } as unknown as MessageResponse
+      try {
+        const record = await mmGetSubject(id)
+        return { ok: true, tracked: true, record } as unknown as MessageResponse
+      } catch (err) {
+        const status = (err as { status?: number })?.status
+        if (status === 404) {
+          await clearMentionTrackingId(message.product_key)
+          return { ok: true, tracked: false } as unknown as MessageResponse
+        }
+        return { ok: false, error: String((err as Error)?.message ?? err) }
+      }
+    }
+    case 'mentions/start-tracking': {
+      try {
+        const settings = await getSettings()
+        const country = (settings.materials_hub_country_code ?? 'GR').toUpperCase()
+        const record = await mmTrackSubject({
+          subject_type: 'product',
+          subject_label: message.subject_label,
+          aliases: message.aliases,
+          country_codes: [message.country_code ?? country],
+          run_first_refresh: true,
+        })
+        if (record.id) await setMentionTrackingId(message.product_key, record.id)
+        return { ok: true, tracked: true, record } as unknown as MessageResponse
+      } catch (err) {
+        return { ok: false, error: String((err as Error)?.message ?? err) }
+      }
+    }
+    case 'mentions/refresh-for-product': {
+      try {
+        const id = await getMentionTrackingId(message.product_key)
+        if (!id) return { ok: false, error: 'Δεν έχει οριστεί παρακολούθηση αναφορών.' }
+        const outcome = await mmRefreshSubject(id, message.force === true)
+        const record = await mmGetSubject(id)
+        return { ok: true, tracked: true, record, outcome } as unknown as MessageResponse
+      } catch (err) {
+        return { ok: false, error: String((err as Error)?.message ?? err) }
+      }
+    }
+    case 'mentions/stop-for-product': {
+      try {
+        const id = await getMentionTrackingId(message.product_key)
+        if (id) {
+          try {
+            await mmDeleteSubject(id)
+          } catch (e) {
+            console.warn('[oxygen-helper] mentions delete remote failed', e)
+          }
+          await clearMentionTrackingId(message.product_key)
+        }
+        return { ok: true } as MessageResponse
+      } catch (err) {
+        return { ok: false, error: String((err as Error)?.message ?? err) }
+      }
+    }
+    case 'mentions/feed-for-product': {
+      try {
+        const id = await getMentionTrackingId(message.product_key)
+        if (!id) return { ok: true, feed: [] } as unknown as MessageResponse
+        const feed = await mmGetSubjectFeed(id, message.limit ?? 100)
+        return { ok: true, feed } as unknown as MessageResponse
+      } catch (err) {
+        return { ok: false, error: String((err as Error)?.message ?? err) }
+      }
+    }
+    case 'mentions/summary-for-product': {
+      try {
+        const id = await getMentionTrackingId(message.product_key)
+        if (!id) return { ok: true, summary: null } as unknown as MessageResponse
+        const summary = await mmGetSubjectSummary(id, message.days ?? 30)
+        return { ok: true, summary } as unknown as MessageResponse
       } catch (err) {
         return { ok: false, error: String((err as Error)?.message ?? err) }
       }

@@ -194,6 +194,18 @@ export type Message =
       type: 'translate/to-greek'
       text: string
     }
+  | { type: 'mentions/status-for-product'; product_key: string; subject_label?: string }
+  | {
+      type: 'mentions/start-tracking'
+      product_key: string
+      subject_label: string
+      aliases?: string[]
+      country_code?: string
+    }
+  | { type: 'mentions/refresh-for-product'; product_key: string; force?: boolean }
+  | { type: 'mentions/stop-for-product'; product_key: string }
+  | { type: 'mentions/feed-for-product'; product_key: string; limit?: number }
+  | { type: 'mentions/summary-for-product'; product_key: string; days?: number }
   | { type: 'prices/exclusions/get'; product_key: string }
   | { type: 'prices/exclusions/add'; product_key: string; hostname: string }
   | { type: 'prices/exclusions/remove'; product_key: string; hostname: string }

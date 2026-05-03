@@ -196,6 +196,7 @@ export async function renderAi(root: HTMLElement): Promise<void> {
   mhCountryLabel.appendChild(mhCountryHint)
   root.appendChild(mhCountryLabel)
 
+
   // v3 verification toggle. Default on (accurate prices). Flipping OFF
   // trades accuracy for ~3× lower cost / ~30s faster first response.
   const mhVerifyWrap = document.createElement('div')

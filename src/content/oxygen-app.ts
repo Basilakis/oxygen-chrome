@@ -373,7 +373,72 @@ function scanProductInfoModal(): void {
     }
 
     injectPriceMonitoringSection(dialog)
+    injectMentionMonitoringSection(dialog)
   }
+}
+
+/**
+ * Mention Monitoring section — lives INSIDE the Περισσότερα (`#tab-more`)
+ * pane of the product modal, mirroring the Price Monitoring affordance in
+ * Κέρδος. Renders via the shared renderer so the web app gets the same UI.
+ */
+const MENTION_SECTION_ID = 'oxygen-helper-mention-monitoring-section'
+
+function injectMentionMonitoringSection(dialog: HTMLElement): void {
+  const morePane = dialog.querySelector<HTMLElement>('#tab-more')
+  if (!morePane) return
+  if (morePane.querySelector(`#${MENTION_SECTION_ID}`)) return
+
+  const section = document.createElement('div')
+  section.id = MENTION_SECTION_ID
+  // Oxygen renders #tab-more as two `.col50` floated columns. Without
+  // `clear:both` our section either lands to the right of the cols or
+  // gets visually overlapped. Force full-width + clear so it always sits
+  // BELOW the two columns regardless of their height.
+  Object.assign(section.style, {
+    clear: 'both',
+    width: '100%',
+    boxSizing: 'border-box',
+    marginTop: '20px',
+    paddingTop: '16px',
+    borderTop: '1px solid #e4e7eb',
+  } as CSSStyleDeclaration)
+
+  const title = document.createElement('div')
+  title.textContent = 'Mention Monitoring'
+  Object.assign(title.style, {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#1f2330',
+    marginBottom: '10px',
+  } as CSSStyleDeclaration)
+  section.appendChild(title)
+
+  const bodyWrap = document.createElement('div')
+  Object.assign(bodyWrap.style, {
+    minHeight: '40px',
+    fontSize: '13px',
+    color: '#6b7280',
+  } as CSSStyleDeclaration)
+  section.appendChild(bodyWrap)
+
+  morePane.appendChild(section)
+
+  const ctx = extractProductContext(dialog)
+  if (!ctx) {
+    bodyWrap.textContent = 'Δεν βρέθηκαν πληροφορίες προϊόντος για παρακολούθηση αναφορών.'
+    return
+  }
+  // Aliases include the SKU/Κωδικός part of the productKey when available
+  // (gives the classifier a second hook beyond the human-readable name).
+  const aliases: string[] = []
+  const codeMatch = /^code:(.+)$/.exec(ctx.productKey)
+  if (codeMatch?.[1]) aliases.push(codeMatch[1])
+  void renderMentionMonitoringInto(bodyWrap, {
+    productKey: ctx.productKey,
+    productName: ctx.productName,
+    aliases: aliases.length ? aliases : undefined,
+  })
 }
 
 /**
@@ -438,6 +503,7 @@ import {
   buildPriceMonitoringSearchQuery,
   renderPriceMonitoringInto,
 } from '@/shared/ui/price-monitoring'
+import { renderMentionMonitoringInto } from '@/shared/ui/mention-monitoring'
 
 function extractProductContext(dialog: HTMLElement): PriceMonitoringContext | null {
   // Product name — same anchor as the Google-search icon.

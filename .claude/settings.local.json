@@ -83,7 +83,12 @@
       "Bash(curl -sL -m 10 -o /tmp/init.js -w \"%{http_code}\\\\n\" https://docs.oxygen.gr/swagger-initializer.js)",
       "Bash(curl -sL -m 30 -o tmp-api/oxygen-api.json -w \"HTTP %{http_code} · %{size_download} bytes\\\\n\" https://docs.oxygen.gr/oxygen-api.json)",
       "Bash(awk 'NR<1305 || NR>1394' src/shared/ui/price-monitoring.ts)",
-      "Bash(mv /tmp/pm.tmp src/shared/ui/price-monitoring.ts)"
+      "Bash(mv /tmp/pm.tmp src/shared/ui/price-monitoring.ts)",
+      "Bash(curl -s -m 20 -w \"\\\\n---HTTP %{http_code}---\\\\n\" -H \"Authorization: Bearer kai_tQ3ehVRpUJp9kQjshm0BP04lRYiDVCVi\" -H \"accept: application/json\" https://v1api.materialshub.gr/api/v1/mention-monitoring/track)",
+      "Bash(curl -s -m 20 -w \"\\\\n---HTTP %{http_code}---\\\\n\" -X POST -H \"Authorization: Bearer kai_tQ3ehVRpUJp9kQjshm0BP04lRYiDVCVi\" -H \"Content-Type: application/json\" -H \"accept: application/json\" -d '{\"subject_type\":\"keyword\",\"subject_label\":\"oxygen-helper-test\",\"run_first_refresh\":false}' https://v1api.materialshub.gr/api/v1/mention-monitoring/track)",
+      "Bash(curl -s -m 15 -w \"\\\\n---HTTP %{http_code}---\\\\n\" -H \"Authorization: Bearer kai_tQ3ehVRpUJp9kQjshm0BP04lRYiDVCVi\" https://v1api.materialshub.gr/api/v1/prices/track)",
+      "Bash(curl -s -m 15 -w \"\\\\n---HTTP %{http_code}---\\\\n\" -H \"Authorization: Bearer kai_tQ3ehVRpUJp9kQjshm0BP04lRYiDVCVi\" https://v1api.materialshub.gr/api/v1/mentions/track)",
+      "Bash(curl -s -m 15 -w \"\\\\n---HTTP %{http_code}---\\\\n\" -X POST -H \"Authorization: Bearer kai_tQ3ehVRpUJp9kQjshm0BP04lRYiDVCVi\" -H \"Content-Type: application/json\" -d '{\"subject_type\":\"keyword\",\"subject_label\":\"oxygen-helper-test\",\"run_first_refresh\":false}' https://v1api.materialshub.gr/api/v1/mentions/track)"
     ]
   }
 }

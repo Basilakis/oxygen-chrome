@@ -6,6 +6,7 @@ import {
   renderPriceMonitoringInto,
   type PriceMonitoringContext,
 } from '@/shared/ui/price-monitoring'
+import { renderMentionMonitoringInto } from '@/shared/ui/mention-monitoring'
 
 /**
  * True when we're running inside the Chrome extension runtime (popup or
@@ -375,8 +376,44 @@ function renderHit(p: SearchResults['exact'][number]['product']): HTMLElement {
       void renderPriceMonitoringInto(panel, ctx)
     })
 
+    // Parallel "Mention monitoring" button — same toggle pattern, separate
+    // panel below. Uses the catalog product's name as `subject_label`,
+    // appends product code as an alias when present.
+    const mentionBtn = document.createElement('button')
+    mentionBtn.className = 'btn'
+    mentionBtn.textContent = '📣 Mention monitoring'
+    mentionBtn.title = 'Παρακολούθηση αναφορών σε ειδήσεις, blogs, RSS, LLM'
+    row.appendChild(mentionBtn)
+
+    const mentionPanel = document.createElement('div')
+    mentionPanel.style.marginTop = '10px'
+    mentionPanel.style.padding = '10px'
+    mentionPanel.style.background = 'var(--bg-page, #f5f6fa)'
+    mentionPanel.style.borderRadius = '6px'
+    mentionPanel.style.display = 'none'
+
+    mentionBtn.addEventListener('click', () => {
+      const isOpen = mentionPanel.style.display !== 'none'
+      if (isOpen) {
+        mentionPanel.style.display = 'none'
+        mentionBtn.textContent = '📣 Mention monitoring'
+        return
+      }
+      mentionPanel.style.display = 'block'
+      mentionBtn.textContent = '✕ Κλείσιμο'
+      const productKey = (p.code ?? '').trim()
+        ? `code:${p.code}`
+        : `name:${(p.name ?? '').trim()}`
+      void renderMentionMonitoringInto(mentionPanel, {
+        productKey,
+        productName: (p.name ?? '').trim(),
+        aliases: (p.code ?? '').trim() ? [p.code as string] : undefined,
+      })
+    })
+
     box.appendChild(row)
     box.appendChild(panel)
+    box.appendChild(mentionPanel)
     return box
   }
 
